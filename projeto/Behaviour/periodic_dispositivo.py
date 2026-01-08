@@ -13,7 +13,7 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
         dados = dispositivo_logica.gerar_dados()
 
         # Envia para o JID que foi configurado no agente (o paciente/médico)
-        msg = Message(to=self.agent.jid_destino)
+        msg = Message(to=self.agent.jid_paciente)
         msg.set_metadata("performative", "inform")
         msg.body = jsonpickle.encode(dados)
 
