@@ -1,5 +1,7 @@
 from spade.agent import Agent
-from behaviour.cyclic_medico import CyclicBehavMedico
+from Behaviour.cyclic_medico import CyclicBehavMedico
+from Behaviour.oneShot_medico import oneShotBehavMedico
+
 
 class CustomerAgent(Agent):
 
@@ -8,4 +10,6 @@ class CustomerAgent(Agent):
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")
         a = CyclicBehavMedico()
+        b = oneShotBehavMedico()
         self.add_behaviour(a)
+        self.add_behaviour(b)

@@ -1,5 +1,5 @@
 from spade.agent import Agent
-from behaviour.periodic_dispositivo import PeriodicBehavDispositivo
+from Behaviour.periodic_dispositivo import PeriodicBehavDispositivo
 
 class CustomerAgent(Agent):
 

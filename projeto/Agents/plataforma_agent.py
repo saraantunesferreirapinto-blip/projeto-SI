@@ -1,6 +1,6 @@
 from spade.agent import Agent
-from behaviour.cyclic_plataforma import CyclicBehavPlataforma
-from behaviour.periodic_plataforma import PeriodicBehavPlataforma
+from Behaviour.cyclic_plataforma import CyclicBehavPlataforma
+from Behaviour.periodic_plataforma import PeriodicBehavPlataforma
 
 class CustomerAgent(Agent):
 

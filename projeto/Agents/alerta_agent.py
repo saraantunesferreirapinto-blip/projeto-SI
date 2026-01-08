@@ -1,5 +1,5 @@
 from spade.agent import Agent
-from behaviour.cyclic_alerta import CyclicBehavAlerta
+from Behaviour.cyclic_alerta import CyclicBehavAlerta
 
 class CustomerAgent(Agent):
 

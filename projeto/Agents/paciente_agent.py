@@ -1,7 +1,7 @@
 from spade.agent import Agent
-from behaviour.cyclic_paciente import CyclicBehavPaciente
-from behaviour.oneShot_paciente import OneShotBehavPaciente
-from behaviour.periodic_paciente import PeriodicBehavPaciente
+from Behaviour.cyclic_paciente import CyclicBehavPaciente
+from Behaviour.oneShot_paciente import OneShotBehavPaciente
+from Behaviour.periodic_paciente import PeriodicBehavPaciente
 
 class CustomerAgent(Agent):
 
