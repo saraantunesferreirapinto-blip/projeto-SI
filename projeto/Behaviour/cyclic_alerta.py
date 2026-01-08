@@ -24,20 +24,26 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 sistolica = valores_tensao[0]
                 diastolica = valores_tensao[1]
 
-                if sistolica > 90 and sistolica < 120 and diastolica > 60 and diastolica < 84:
+
+                if (sistolica >= 160 or sistolica < 80 or diastolica >= 100 or diastolica < 50 or
+                    oxigenio < 90 or glicemia < 60 or glicemia > 250):
                     msg_to_manager = Message(to=self.jid_medico)  
                     msg_to_manager.body = "Alerta informativo"  
-                    msg_to_manager.set_metadata("performative", "inform")
+                    msg_to_manager.set_metadata("performative", "informativo")
 
-                elif sistolica > 130 and sistolica < 159 and sistolica > 80 and sistolica < 89 and diastolica > 85 and diastolica < 99 and diastolica > 50 and diastolica < 59:
+                elif (
+                    130 <= sistolica <= 159 or 80 <= sistolica <= 89 or
+                    85 <= diastolica <= 99 or 50 <= diastolica <= 59 or
+                    90 <= oxigenio <= 94 or
+                    60 <= glicemia <= 69 or 141 <= glicemia <= 250):
                     msg_to_manager = Message(to=self.jid_medico)  
                     msg_to_manager.body = "Alerta urgente"  
                     msg_to_manager.set_metadata("performative", "urgente")
 
-                elif sistolica > 160 and sistolica < 80 and diastolica > 100 and diastolica < 50:
+                else: 
                     msg_to_manager = Message(to=self.jid_medico)  
-                    msg_to_manager.body = "Alerta crítico"  
-                    msg_to_manager.set_metadata("performative", "critico")
+                    msg_to_manager.body = "Alerta informativo"  
+                    msg_to_manager.set_metadata("performative", "informativo")
 
             elif p == "failure":
 
