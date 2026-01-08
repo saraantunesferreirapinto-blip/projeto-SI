@@ -1,0 +1,22 @@
+import jsonpickle
+from spade.agent import Agent
+from spade.behaviour import PeriodicBehaviour
+from spade.message import Message
+from projeto.Classes.dispositivo import Dispositivo
+
+class PeriodicBehavDispositivo (PeriodicBehaviour):
+
+    async def run(self):
+        # Acede ao objeto lógico (Tensiometro/Glicometro) guardado no Agente
+        dispositivo_logica = self.agent.dispositivo_logica
+        
+        # Gera os dados (Polimorfismo: funciona para qualquer classe)
+        dados = dispositivo_logica.gerar_dados()
+
+        # Envia para o JID que foi configurado no agente (o paciente/médico)
+        msg = Message(to=self.agent.jid_destino)
+        msg.set_metadata("performative", "inform")
+        msg.body = jsonpickle.encode(dados)
+
+        await self.send(msg)
+        print(f"[{self.agent.name}] enviou: {dados}")
