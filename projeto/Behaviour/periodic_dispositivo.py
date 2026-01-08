@@ -2,7 +2,6 @@ import jsonpickle
 from spade.agent import Agent
 from spade.behaviour import PeriodicBehaviour
 from spade.message import Message
-from projeto.Classes.dispositivo import Dispositivo
 
 class PeriodicBehavDispositivo (PeriodicBehaviour):
 
