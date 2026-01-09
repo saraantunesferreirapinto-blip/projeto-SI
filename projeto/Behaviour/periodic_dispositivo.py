@@ -9,26 +9,41 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
         tipo = self.agent.tipo_dispositivo 
         valor = None
 
-        if tipo == "tensiometro":
-            sis = random.randint(110, 150)
-            dia = random.randint(70, 95)
-            valor = f"{sis}/{dia}"
-            
-        elif tipo == "glicometro":
-            valor = random.randint(70, 140)
-            
-        elif tipo == "oximetro":
-            valor = random.randint(90, 100)
-
-        if valor:
+        if random.random() < 0.2: 
+            # SIMULAÇÃO DE ERRO
             payload = {
                 "tipo_dispositivo": tipo,
-                "valor": valor
+                "valor": None,       
             }
-            
-            msg = Message(to=self.agent.jid_destino)
-            msg.set_metadata("performative", "inform")
+            print(f"[{self.agent.name}] Simulei uma falha!")
+
+            msg = Message(to=self.agent.jid_paciente)
+            msg.set_metadata("performative", "failure")
             msg.body = jsonpickle.encode(payload)
-            
+
             await self.send(msg)
-            print(f"[{self.agent.name}] Gerou e enviou: {payload}")
+
+        else:
+            if tipo == "tensiometro":
+                sis = random.randint(110, 150)
+                dia = random.randint(70, 95)
+                valor = f"{sis}/{dia}"
+                
+            elif tipo == "glicometro":
+                valor = random.randint(70, 140)
+                
+            elif tipo == "oximetro":
+                valor = random.randint(90, 100)
+
+            if valor:
+                payload = {
+                    "tipo_dispositivo": tipo,
+                    "valor": valor
+                }
+                
+                msg = Message(to=self.agent.jid_paciente)
+                msg.set_metadata("performative", "inform")
+                msg.body = jsonpickle.encode(payload)
+            
+                await self.send(msg)
+                print(f"[{self.agent.name}] Gerou e enviou: {payload}")
