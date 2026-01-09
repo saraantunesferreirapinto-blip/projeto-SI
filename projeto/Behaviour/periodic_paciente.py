@@ -2,19 +2,26 @@ import jsonpickle
 from spade.agent import Agent
 from spade.behaviour import PeriodicBehaviour
 from spade.message import Message
+from Classes.perfil_paciente import Perfil_paciente
 
 class PeriodicBehavDispositivo (PeriodicBehaviour):
 
-    async def enviar_para_plataforma(self):
+    async def run(self):
+        # ACEDER À INSTÂNCIA (O objeto real guardado no Agente)
+        perfil = self.agent.meu_perfil
+        
+        if not perfil:
+            return
 
-        if perfil.dados_oximetro and perfil.dados_tensiometro and perfil.dados_glicometro:
-                await self.enviar_para_plataforma(perfil.formatar_relatorio())
-                perfil.dados_oximetro = perfil.dados_tensiometro = perfil.dados_glicometro = None
-                
-        # Cria a mensagem agregada para a Plataforma
-        msg_plataforma = Message(to=self.agent.jid_plataforma)
+        # OBTER OS DADOS (Usar o método que filtra as doenças)
+        dados_para_enviar = perfil.formatar_relatorio()
+
+        # CRIAR MENSAGEM
+        msg_plataforma = Message(to=self.agent.jid_alerta)
         msg_plataforma.set_metadata("performative", "inform")
-        msg_plataforma.body = jsonpickle.encode(self.agent.dados_atuais)
+        
+        # CODIFICAR OS DADOS REAIS
+        msg_plataforma.body = jsonpickle.encode(dados_para_enviar)
         
         await self.send(msg_plataforma)
-        print(f"[{self.agent.name}] Dados enviados para o Agente Plataforma!")
+        print(f"[{self.agent.name}] Relatório enviado para o Agente Plataforma: {dados_para_enviar}")
