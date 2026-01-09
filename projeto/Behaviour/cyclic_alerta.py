@@ -8,13 +8,9 @@ class CyclicAlerta(CyclicBehaviour):
         msg = await self.receive(timeout=10) 
         
         if msg:
-<<<<<<< HEAD
-            try:
-=======
             performative = msg.get_metadata("performative")
             
             if performative == "inform":
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                 perfil = jsonpickle.decode(msg.body)
                 
                 if not isinstance(perfil, Perfil_paciente):
@@ -24,30 +20,17 @@ class CyclicAlerta(CyclicBehaviour):
                 
                 mensagens_a_enviar = []
 
-<<<<<<< HEAD
-                # ======================================================
-                # 1. GLICÓMETRO (DIABETES)
-                # ======================================================
-                if perfil.dados_glicometro is not None:
-                    
-                    # 1.1 Procura a doença na lista
-=======
                 # 1. GLICÓMETRO (DIABETES)
                 if perfil.dados_glicometro is not None:
                     
                     # Procura a doença na lista
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     doenca_encontrada = None
                     for d in perfil.doencas:
                         if "diab" in d.lower(): 
                             doenca_encontrada = d
                             break
                     
-<<<<<<< HEAD
-                    # 1.2 Se encontrou, analisa e prepara mensagem
-=======
                     # Se encontrou, analisa e prepara mensagem
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     if doenca_encontrada:
                         valor = perfil.dados_glicometro
                         performative = "inform"
@@ -67,18 +50,6 @@ class CyclicAlerta(CyclicBehaviour):
                                 "doenca_detetada": doenca_encontrada,
                                 "problema": problema,
                                 "valor": valor,
-<<<<<<< HEAD
-                                "perfil_completo": perfil # <--- OBRIGATÓRIO: Envia o perfil
-                            }
-                        })
-
-                # ======================================================
-                # 2. TENSIÓMETRO (HIPERTENSÃO)
-                # ======================================================
-                if perfil.dados_tensiometro is not None:
-                    
-                    # 2.1 Procura a doença na lista
-=======
                                 "perfil_completo": perfil 
                             }
                         })
@@ -87,18 +58,13 @@ class CyclicAlerta(CyclicBehaviour):
                 if perfil.dados_tensiometro is not None:
                     
                     # Procura a doença na lista
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     doenca_encontrada = None
                     for d in perfil.doencas:
                         if "hiper" in d.lower() or "tens" in d.lower():
                             doenca_encontrada = d
                             break
                     
-<<<<<<< HEAD
-                    # 2.2 Se encontrou, analisa e prepara mensagem
-=======
                     # Se encontrou, analisa e prepara mensagem
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     if doenca_encontrada:
                         valor = perfil.dados_tensiometro
                         performative = "inform"
@@ -124,18 +90,6 @@ class CyclicAlerta(CyclicBehaviour):
                                 "doenca_detetada": doenca_encontrada,
                                 "problema": problema,
                                 "valor": valor,
-<<<<<<< HEAD
-                                "perfil_completo": perfil # <--- OBRIGATÓRIO: Envia o perfil
-                            }
-                        })
-
-                # ======================================================
-                # 3. OXÍMETRO (DPOC)
-                # ======================================================
-                if perfil.dados_oximetro is not None:
-                    
-                    # 3.1 Procura a doença na lista
-=======
                                 "perfil_completo": perfil 
                             }
                         })
@@ -144,18 +98,13 @@ class CyclicAlerta(CyclicBehaviour):
                 if perfil.dados_oximetro is not None:
                     
                     # Procura a doença na lista
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     doenca_encontrada = None
                     for d in perfil.doencas:
                         if "dpoc" in d.lower():
                             doenca_encontrada = d
                             break
                     
-<<<<<<< HEAD
-                    # 3.2 Se encontrou, analisa e prepara mensagem
-=======
                     # Se encontrou, analisa e prepara mensagem
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c
                     if doenca_encontrada:
                         valor = perfil.dados_oximetro
                         performative = "inform"
@@ -167,40 +116,6 @@ class CyclicAlerta(CyclicBehaviour):
                         elif valor < 90:
                             performative = "urgente"
                             problema = f"Saturação Baixa ({valor}%)"
-<<<<<<< HEAD
-
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil # <--- OBRIGATÓRIO: Envia o perfil
-                            }
-                        })
-
-                # ======================================================
-                # 4. ENVIO DE TODAS AS MENSAGENS GERADAS
-                # ======================================================
-                plataforma_jid = self.agent.get("plataforma_jid")
-                
-                if plataforma_jid and mensagens_a_enviar:
-                    for item in mensagens_a_enviar:
-                        msg_out = Message(to=plataforma_jid)
-                        
-                        # Define a Performative (inform, urgente, critico)
-                        msg_out.set_metadata("performative", item["performative"])
-                        
-                        # O Body leva tudo (doença + perfil + valor)
-                        msg_out.body = jsonpickle.encode(item["body"])
-                        
-                        await self.send(msg_out)
-                        print(f"--> Para Plataforma ({item['performative']}): {item['body']['doenca_detetada']}")
-
-            except Exception as e:
-                print(f"Erro: {e}")
-=======
 
                         mensagens_a_enviar.append({
                             "performative": performative,
@@ -341,4 +256,3 @@ class CyclicAlerta(CyclicBehaviour):
         
         else:
             print("Paciente: Nenhuma mensagem recebida recentemente.")
->>>>>>> df5ac7bf128c51b70186a4fa2002e1b33ae42f7c

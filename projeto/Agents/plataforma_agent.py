@@ -6,7 +6,7 @@ class CustomerAgent(Agent):
 
     paciente_subscribe = []
     medico_subscribe = []
-
+    historico_falhas = {}
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")
         a = CyclicBehavPlataforma()
