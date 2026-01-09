@@ -1,8 +1,7 @@
-import spade
 from spade.behaviour import CyclicBehaviour
 import jsonpickle
 
-class cyclic_paciente(CyclicBehaviour):
+class CyclicBehavPaciente(CyclicBehaviour):
 
     async def run(self):
         print("Paciente: À espera de dados...")

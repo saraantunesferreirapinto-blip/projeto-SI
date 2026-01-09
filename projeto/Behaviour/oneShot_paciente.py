@@ -1,22 +1,42 @@
 import random
-
+import jsonpickle
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
-
-from Classes.informPosition import InformPosition
 from Classes.position import Position
-import jsonpickle
+from Classes.perfil_paciente import Perfil_paciente
 
-class OneShotBehavPaciente (OneShotBehaviour):
+class OneShotBehavPaciente(OneShotBehaviour):
     async def run(self):
-        # using random.randint(a,b) to get a random int between a and b
-        # use it to randomly initialize the position of the taxi in the map, i.e., between positions [1-100] for x axis and [1-100] for y axis
-        self.agent.current_location = InformPosition(str(self.agent.jid), Position(random.randint(1, 100), random.randint(1, 100)), True)
-        print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent initialized with {}".format(self.agent.current_location.toString()))
+        # Gerar Posição Aleatória
+        x = random.randint(1, 100)
+        y = random.randint(1, 100)
+        posicao_inicial = Position(x, y)
 
-        msg = Message(to=self.agent.get("service_contact"))             # Instantiate the message
-        msg.body = jsonpickle.encode(self.agent.current_location)       # Set the message content (serialized object)
-        msg.set_metadata("performative", "subscribe")                   # Set the message performative
+        # CRIAR O PERFIL DO PACIENTE
+        print(f"[{self.agent.name}] A criar perfil do paciente...")
+        
+        # Guardamos no self.agent para que o CyclicBehaviour e o PeriodicBehaviour o vejam depois!
+        self.agent.meu_perfil = Perfil_paciente(
+            jid_paciente=str(self.agent.jid),
+            nome=f"Paciente_{self.agent.name}", # Nome genérico baseado no JID
+            doencas=["Diabetes", "Hipertensao", "DPOC"]  
+        )
+        
+        # Atualizamos a posição no perfil criado
+        self.agent.meu_perfil.posicao_atual = posicao_inicial
 
-        print("Agent {}:".format(str(self.agent.jid)) + " Taxi Agent subscribing to Manager Agent {}".format(str(self.agent.get("service_contact"))))
-        await self.send(msg)
+        # Preparar a Mensagem de Subscrição (Registo na Plataforma)
+        destino = self.agent.get("service_contact")
+        
+        if destino:
+            msg = Message(to=destino)
+            msg.set_metadata("performative", "subscribe")
+            
+            # Enviamos o relatório inicial formatado para a plataforma saber quem somos e o que temos.
+            dados_iniciais = self.agent.meu_perfil.formatar_relatorio()
+            msg.body = jsonpickle.encode(dados_iniciais)
+
+            await self.send(msg)
+            print(f"[{self.agent.name}] Subscreveu à Plataforma ({destino}) com posição {x},{y}")
+        else:
+            print(f"[{self.agent.name}] ERRO: 'service_contact' não definido!")

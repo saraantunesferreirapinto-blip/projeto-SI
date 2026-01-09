@@ -1,10 +1,8 @@
 import jsonpickle
-from spade.agent import Agent
 from spade.behaviour import PeriodicBehaviour
 from spade.message import Message
-from Classes.perfil_paciente import Perfil_paciente
 
-class PeriodicBehavDispositivo (PeriodicBehaviour):
+class PeriodicBehavPaciente (PeriodicBehaviour):
 
     async def run(self):
         # ACEDER À INSTÂNCIA (O objeto real guardado no Agente)
