@@ -1,7 +1,7 @@
 from spade.agent import Agent
 from Behaviour.cyclic_alerta import CyclicBehavAlerta
 
-class CustomerAgent(Agent):
+class AlertaAgent(Agent):
 
     taxis_subscribed = []
 

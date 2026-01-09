@@ -3,7 +3,7 @@ from Behaviour.cyclic_paciente import CyclicBehavPaciente
 from Behaviour.oneShot_paciente import OneShotBehavPaciente
 from Behaviour.periodic_paciente import PeriodicBehavPaciente
 
-class CustomerAgent(Agent):
+class PacienteAgent(Agent):
 
     def __init__(self, jid, password, nome_paciente, doencas_paciente, jid_plataforma):
         super().__init__(jid, password)

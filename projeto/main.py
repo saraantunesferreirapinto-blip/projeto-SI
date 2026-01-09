@@ -9,9 +9,7 @@ from Agents.dispositivo_agent import DispositivoAgent
 # Perfis e classes
 from Classes.perfil_paciente import Perfil_paciente 
 from Classes.perfil_medico import Perfil_medico 
-from Classes.glicometro import Glicometro
-from Classes.oximetro import Oximetro
-from Classes.tensiometro import Tensiometro
+
 
 XMPP_SERVER = 'desktop-NIKN4PF'
 PASSWORD = 'NOPASSWORD'
@@ -26,7 +24,7 @@ async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
     
     lista_doencas = []
     lista_sensores = []
-    mapa = {"1": (Glicometro, "diabetes"), "2": (Tensiometro, "hipertensao"), "3": (Oximetro, "dpoc")}
+    mapa = {"1": ("glicometro", "diabetes"), "2": ("tensiometro", "hipertensao"), "3": ("oximetro", "dpoc")}
 
     for item in escolhas.split(','):
         ch = item.strip()
@@ -35,12 +33,26 @@ async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
             lista_sensores.append(classe_d())
             lista_doencas.append(nome_d)
 
+    # CRIAR O PERFIL
     perfil = Perfil_paciente(paciente_jid, nome=nome, doencas=lista_doencas)
     
-    paciente_agent = PacienteAgent(paciente_jid, PASSWORD, perfil=perfil)
+    # CRIAR E CONFIGURAR O AGENTE PACIENTE
+    # Nota: Só passamos JID e Password. Não passamos o perfil aqui.
+    paciente_agent = PacienteAgent(paciente_jid, PASSWORD)
+    
+    # INJEÇÃO DIRETA: "Colamos" o perfil ao agente
+    paciente_agent.meu_perfil = perfil
+    paciente_agent.jid_alerta = f"gestor_alertas@{XMPP_SERVER}" # Definir destino de alertas
+    
     await paciente_agent.start()
 
-    dispositivo_agent = DispositivoAgent(f"disp_{id_sugestao}@{XMPP_SERVER}", PASSWORD, sensores=lista_sensores)
+    # CRIAR E CONFIGURAR O AGENTE DISPOSITIVO
+    disp_jid = f"disp_{id_sugestao}@{XMPP_SERVER}"
+    dispositivo_agent = DispositivoAgent(disp_jid, PASSWORD)
+    
+    # INJEÇÃO DIRETA
+    dispositivo_agent.sensores = lista_sensores # Passamos a lista de sensores
+    dispositivo_agent.jid_destino = paciente_jid # Dizemos para onde enviar dados
     
     await dispositivo_agent.start()
     
@@ -49,19 +61,28 @@ async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
 async def main():
     agentes_ativos = []
 
-    # 1. Iniciar Plataforma
-    plataforma_paciente_jid = f"plataforma@{XMPP_SERVER}"
-    plataforma_agent = PlataformaAgent(plataforma_paciente_jid, PASSWORD)    
+    # --- PLATAFORMA ---
+    plataforma_jid = f"plataforma@{XMPP_SERVER}"
+    plataforma_agent = PlataformaAgent(plataforma_jid, PASSWORD)
+    
+    # INJEÇÃO: Inicializar as variáveis que a plataforma precisa
+    plataforma_agent.ultimos_contactos = {}
+    plataforma_agent.falhas_consecutivas = {}
+    plataforma_agent.historico_falhas = {}
+    
     await plataforma_agent.start()
     agentes_ativos.append(plataforma_agent)
-    print(f"Plataforma inicidispositivo_agenta: {plataforma_paciente_jid}")
+    print(f"Plataforma iniciada: {plataforma_jid}")
 
-    # 2. Iniciar Alerta
-    alerta_paciente_jid = f"gestor_alertas@{XMPP_SERVER}"
-    alerta_agent= AlertaAgent(alerta_paciente_jid, PASSWORD)
+    # --- ALERTA ---
+    alerta_jid = f"gestor_alertas@{XMPP_SERVER}"
+    alerta_agent = AlertaAgent(alerta_jid, PASSWORD)
+    # Se o alerta precisar de variáveis, define aqui:
+    # alerta_agent.lista_erros = [] 
+    
     await alerta_agent.start()
     agentes_ativos.append(alerta_agent)
-    print(f" Gestor de Alertas inicidispositivo_agento: {alerta_paciente_jid}")
+    print(f"Gestor de Alertas iniciado: {alerta_jid}")
 
     print("A iniciar Sistema...")
     
@@ -73,7 +94,7 @@ async def main():
 
     print("\n 3 pacientes cridispositivo_agentos. Sistema em execução.")
 
-    # 3. Menu de Gestão (Médicos e Pacientes dispositivo_agenticionais)
+    # Menu de Gestão (Médicos e Pacientes dispositivo_agenticionais)
     try:
         while True:
             print("\n[MENU] 1: dispositivo_agenticionar Médico | 2: dispositivo_agenticionar Paciente | 3: Sair")
@@ -91,7 +112,7 @@ async def main():
                     especialidade=especialidade
                 )
                 
-                # 2. Inicializar o Agente Médico
+                # Inicializar o Agente Médico
                 medico_agent = MedicoAgent(medico_jid, PASSWORD, perfil=perfil_med)
                 
                 await medico_agent.start()

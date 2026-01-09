@@ -46,7 +46,7 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 relatorio = self.agent.meu_perfil.formatar_relatorio()
                 print(f"    Estado Atual do Paciente: {relatorio['sinais_vitais']}")
 
-                msg = Message(to=self.agent.jid_destino)
+                msg = Message(to=self.agent.jid_plataforma)
                 msg.set_metadata("performative", "failure")
                 msg.body = jsonpickle.encode(relatorio)
 

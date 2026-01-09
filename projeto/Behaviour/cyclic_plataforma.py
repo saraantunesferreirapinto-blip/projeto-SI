@@ -6,7 +6,7 @@ import jsonpickle
 import math
 import time
 
-class cyclic_plataforma(CyclicBehaviour):
+class CyclicBehavPlataforma(CyclicBehaviour):
 
     async def on_end(self):
         await self.agent.stop()

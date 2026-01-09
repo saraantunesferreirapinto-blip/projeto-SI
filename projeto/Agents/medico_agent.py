@@ -3,7 +3,7 @@ from Behaviour.cyclic_medico import CyclicBehavMedico
 from Behaviour.oneShot_medico import oneShotBehavMedico
 
 
-class CustomerAgent(Agent):
+class MedicoAgent(Agent):
 
     taxis_subscribed = []
 

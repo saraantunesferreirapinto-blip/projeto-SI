@@ -1,6 +1,5 @@
 from spade.agent import Agent
 from Behaviour.periodic_dispositivo import PeriodicBehavDispositivo
-from projeto.Classes.tensiometro import Tensiometro
 
 class DispositivoAgent(Agent):
 
