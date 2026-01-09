@@ -11,7 +11,7 @@ from Classes.perfil_paciente import Perfil_paciente
 from Classes.perfil_medico import Perfil_medico 
 
 
-XMPP_SERVER = 'desktop-NIKN4PF'
+XMPP_SERVER = 'LAPTOP-Q3R7L04Q'
 PASSWORD = 'NOPASSWORD'
 
 async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
