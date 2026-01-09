@@ -1,123 +1,120 @@
+import asyncio
 import time
-import spade
-from spade import wait_until_finished
-
-# Importação dos Agentes (Baseado na tua pasta 'Agents')
 from Agents.plataforma_agent import PlataformaAgent
-from Agents.medico_agent import MedicoAgent
 from Agents.alerta_agent import AlertaAgent
+from Agents.medico_agent import MedicoAgent
 from Agents.paciente_agent import PacienteAgent
 from Agents.dispositivo_agent import DispositivoAgent
+
+# Perfis e classes
+from Classes.perfil_paciente import Perfil_paciente 
+from Classes.perfil_medico import Perfil_medico 
+from Classes.glicometro import Glicometro
+from Classes.oximetro import Oximetro
+from Classes.tensiometro import Tensiometro
 
 XMPP_SERVER = 'desktop-NIKN4PF'
 PASSWORD = 'NOPASSWORD'
 
-NUM_PACIENTES = 3
+async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
+    print(f"\n--- Configuração do Paciente {id_sugestao} ---")
+    nome = input(f"Nome do Paciente: ")
+    paciente_jid = f"paciente_{id_sugestao}@{XMPP_SERVER}"
+
+    print("Selecione patologias (ex: 1,3): 1:Diabetes | 2:Hipertensão | 3:DPOC")
+    escolhas = input("Patologias: ")
+    
+    lista_doencas = []
+    lista_sensores = []
+    mapa = {"1": (Glicometro, "diabetes"), "2": (Tensiometro, "hipertensao"), "3": (Oximetro, "dpoc")}
+
+    for item in escolhas.split(','):
+        ch = item.strip()
+        if ch in mapa:
+            classe_d, nome_d = mapa[ch]
+            lista_sensores.append(classe_d())
+            lista_doencas.append(nome_d)
+
+    perfil = Perfil_paciente(paciente_jid, nome=nome, doencas=lista_doencas)
+    
+    paciente_agent = PacienteAgent(paciente_jid, PASSWORD, perfil=perfil)
+    await paciente_agent.start()
+
+    dispositivo_agent = DispositivoAgent(f"disp_{id_sugestao}@{XMPP_SERVER}", PASSWORD, sensores=lista_sensores)
+    
+    await dispositivo_agent.start()
+    
+    return [paciente_agent, dispositivo_agent]
 
 async def main():
-
     agentes_ativos = []
-    
-    print("--- A INICIAR SISTEMA DE TELESSAÚDE ---")
 
-    # ---------------------------------------------------------
-    # 1. INICIAR INFRAESTRUTURA CENTRAL (Plataforma, Médico, Alerta)
-    # ---------------------------------------------------------
-    
-    # -- Agente Plataforma (Centraliza a informação) --
-    plataforma_jid = f"plataforma@{XMPP_SERVER}"
-    plataforma_agent = PlataformaAgent(plataforma_jid, PASSWORD)
+    # 1. Iniciar Plataforma
+    plataforma_paciente_jid = f"plataforma@{XMPP_SERVER}"
+    plataforma_agent = PlataformaAgent(plataforma_paciente_jid, PASSWORD)    
     await plataforma_agent.start()
     agentes_ativos.append(plataforma_agent)
-    print(f"Plataforma iniciada: {plataforma_jid}")
+    print(f"Plataforma inicidispositivo_agenta: {plataforma_paciente_jid}")
 
-    # -- Agente Médico (Recebe os alertas graves) --
-    medico_jid = f"medico_geral@{XMPP_SERVER}"
-    medico_agent = MedicoAgent(medico_jid, PASSWORD)
-    await medico_agent.start()
-    agentes_ativos.append(medico_agent)
-    print(f" Médico iniciado: {medico_jid}")
-
-    # -- Agente Alerta (Analisa dados e encaminha para o médico) --
-    # O Agente Alerta precisa de saber quem é o Médico para lhe enviar notificações
-    alerta_jid = f"gestor_alertas@{XMPP_SERVER}"
-    alerta_agent= AlertaAgent(alerta_jid, PASSWORD)
-    alerta_agent.set("medico_jid", medico_jid) 
+    # 2. Iniciar Alerta
+    alerta_paciente_jid = f"gestor_alertas@{XMPP_SERVER}"
+    alerta_agent= AlertaAgent(alerta_paciente_jid, PASSWORD)
     await alerta_agent.start()
     agentes_ativos.append(alerta_agent)
-    print(f" Gestor de Alertas iniciado: {alerta_jid}")
+    print(f" Gestor de Alertas inicidispositivo_agento: {alerta_paciente_jid}")
 
-    # Informar a Plataforma de quem é o Agente de Alerta (para encaminhar dados brutos se necessário)
-    plataforma_agent.set("alerta_jid", alerta_jid)
-
-    # Pausa para garantir que a infraestrutura está online antes dos pacientes
-    time.sleep(2)
-
-    # ---------------------------------------------------------
-    # 2. INICIAR PACIENTES E DISPOSITIVOS (Loop para 3 Pacientes)
-    # ---------------------------------------------------------
-    for i in range(1, NUM_PACIENTES + 1):
-        
-        # -- Agente Paciente --
-
-        paciente_jid = 'paciente{}@'.format(str(i)) + XMPP_SERVER
-        paciente_agent = PacienteAgent(paciente_jid, PASSWORD)
+    print("A iniciar Sistema...")
     
-        # O Paciente tem de saber para onde enviar os dados (Plataforma)
-        paciente_agent.set("plataforma_jid", plataforma_jid)
-        
-        await paciente_agent.start()
-        agentes_ativos.append(paciente_agent)
+    # Mínimo 3 Pacientes 
+    print("\n O sistema requer a configuração inicial de pelo menos 3 pacientes.")
+    for i in range(1, 4):
+        novos_agentes = await criar_paciente_terminal(XMPP_SERVER, PASSWORD, i)
+        agentes_ativos.extend(novos_agentes)
 
-    
+    print("\n 3 pacientes cridispositivo_agentos. Sistema em execução.")
 
-        #-- Dispositivo 1: Tensiómetro --
-        # Instancia a lógica (classe pura)
-        logica_tensiometro = Tensiometro()
-        jid_tens = f"tens_p{i}@{XMPP_SERVER}"
-        
-        # Cria o agente injetando a lógica e o destino (o próprio paciente)
-        agente_tens = DispositivoAgent(
-            jid=jid_tens, 
-            password=PASSWORD,
-            dispositivo_logica=logica_tensiometro,
-            jid_destino=paciente_jid
-        )
-        await agente_tens.start()
-        agentes_ativos.append(agente_tens)
-        print(f"   > Tensiómetro ligado ({jid_tens}) -> a enviar para {paciente_jid}")
-
-        # -- Dispositivo 2: Glicómetro --
-        logica_glicometro = Glicometro()
-        jid_glico = f"glico_p{i}@{XMPP_SERVER}"
-        
-        agente_glico = DispositivoAgent(
-            jid=jid_glico, 
-            password=PASSWORD, 
-            dispositivo_logica=logica_glicometro,
-            jid_destino=paciente_jid
-        )
-        await agente_glico.start()
-        agentes_ativos.append(agente_glico)
-        print(f"   > Glicómetro ligado ({jid_glico}) -> a enviar para {paciente_jid}")
-
-        # Pequena pausa para não "entupir" o servidor XMPP com registos simultâneos
-        time.sleep(1)
-
-    print("\n>>> SISTEMA TOTALMENTE OPERACIONAL <<<")
-    print("Pressiona CTRL+C para encerrar a simulação.")
-
-    # Mantém o script a correr até o utilizador interromper
+    # 3. Menu de Gestão (Médicos e Pacientes dispositivo_agenticionais)
     try:
         while True:
-            time.sleep(1)
+            print("\n[MENU] 1: dispositivo_agenticionar Médico | 2: dispositivo_agenticionar Paciente | 3: Sair")
+            opcao = await asyncio.get_event_loop().run_in_executor(None, input, "Escolha: ")
+
+            if opcao == "1":
+                nome_med = input("Nome do Médico: ")
+                especialidade = input("Especialidade (ex: Cardiologia): ")
+                
+                medico_jid = f"medico_{nome_med.lower()}@{XMPP_SERVER}"
+
+                perfil_med = Perfil_medico(
+                    jid_medico=medico_jid, 
+                    nome=nome_med, 
+                    especialidade=especialidade
+                )
+                
+                # 2. Inicializar o Agente Médico
+                medico_agent = MedicoAgent(medico_jid, PASSWORD, perfil=perfil_med)
+                
+                await medico_agent.start()
+                agentes_ativos.append(medico_agent)
+                
+                print(f"Médico {nome_med} ({especialidade}) registado com sucesso.")
+                
+                time.sleep(1)
+
+            elif opcao == "2":
+                novo_id = len([a for a in agentes_ativos if isinstance(a, PacienteAgent)]) + 1
+                novos = await criar_paciente_terminal(XMPP_SERVER, PASSWORD, novo_id)
+                agentes_ativos.extend(novos)
+
+            elif opcao == "3":
+                break
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
         print("A encerrar agentes...")
         for agente in agentes_ativos:
             await agente.stop()
-        print("Todos os agentes foram desligados.")
+        print("Todos os agentes foram desligdispositivo_agentos.")
 
 if __name__ == "__main__":
-    spade.run(main())
+    asyncio.run(main())
