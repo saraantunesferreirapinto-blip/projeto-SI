@@ -4,7 +4,7 @@ from spade.message import Message
 from spade.message import Message
 
 
-class cyclic_medico(CyclicBehaviour):
+class CyclicBehavMedico(CyclicBehaviour):
 
     async def run(self):
         msg = await self.receive(timeout=10)

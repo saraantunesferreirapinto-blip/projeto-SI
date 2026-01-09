@@ -3,7 +3,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 from Classes.perfil_paciente import Perfil_paciente 
 
-class CyclicAlerta(CyclicBehaviour):
+class CyclicBehavAlerta(CyclicBehaviour):
     async def run(self):
         msg = await self.receive(timeout=10) 
         

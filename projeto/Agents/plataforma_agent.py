@@ -2,9 +2,8 @@ from spade.agent import Agent
 from Behaviour.cyclic_plataforma import CyclicBehavPlataforma
 from Behaviour.periodic_plataforma import PeriodicBehavPlataforma
 
-class CustomerAgent(Agent):
-
-    taxis_subscribed = []
+class PlataformaAgent(Agent):
+    historico_falhas = {}
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")

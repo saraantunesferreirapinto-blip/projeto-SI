@@ -4,7 +4,7 @@ from spade.message import Message
 import asyncio
 import jsonpickle
 
-class cyclic_plataforma(CyclicBehaviour):
+class CyclicBehavPlataforma(CyclicBehaviour):
 
     async def on_end(self):
         await self.agent.stop()
