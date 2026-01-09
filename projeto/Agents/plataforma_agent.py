@@ -4,7 +4,8 @@ from Behaviour.periodic_plataforma import PeriodicBehavPlataforma
 
 class CustomerAgent(Agent):
 
-    taxis_subscribed = []
+    paciente_subscribe = []
+    medico_subscribe = []
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")
