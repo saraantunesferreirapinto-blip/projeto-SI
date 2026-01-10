@@ -148,7 +148,8 @@ async def main():
         novos_agentes = await criar_paciente_terminal(XMPP_SERVER, PASSWORD, i)
         agentes_ativos.extend(novos_agentes)
 
-    print("\n 3 pacientes cridispositivo_agentos. Sistema em execução.")
+    print("\n 3 pacientes criados. Sistema em execução.")
+    await asyncio.sleep(1)
     
 if __name__ == "__main__":
     asyncio.run(main())

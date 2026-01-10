@@ -103,7 +103,6 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 # ENVIO DE TODAS AS MENSAGENS GERADAS
                 destino = self.agent.get("plataforma_jid")
 
-                
                 if destino and mensagens_a_enviar:
                     for item in mensagens_a_enviar:
                         msg_out = Message(to=destino)
