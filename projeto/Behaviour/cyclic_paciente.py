@@ -1,8 +1,12 @@
 from spade.behaviour import CyclicBehaviour
 import jsonpickle
 from spade.message import Message
+import asyncio
 
 class CyclicBehavPaciente(CyclicBehaviour):
+
+    async def on_start(self):
+        await asyncio.sleep(2)
 
     async def run(self):
 

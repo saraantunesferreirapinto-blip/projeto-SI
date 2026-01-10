@@ -2,8 +2,14 @@ import jsonpickle
 from spade.behaviour import PeriodicBehaviour
 from spade.message import Message
 import random
+import asyncio
 
 class PeriodicBehavDispositivo (PeriodicBehaviour):
+
+    async def on_start(self):
+        print(f"[{self.agent.name}] Sensor a ligar...")
+        # --- SOLUÇÃO: ESPERA 2 SEGUNDOS ANTES DE COMEÇAR ---
+        await asyncio.sleep(2)
 
     async def run(self):
         tipo = self.agent.tipo_dispositivo 

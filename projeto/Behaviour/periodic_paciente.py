@@ -1,8 +1,12 @@
 import jsonpickle
 from spade.behaviour import PeriodicBehaviour
 from spade.message import Message
+import asyncio
 
 class PeriodicBehavPaciente (PeriodicBehaviour):
+
+    async def on_start(self):
+        await asyncio.sleep(2)
 
     async def run(self):
         # ACEDER À INSTÂNCIA (O objeto real guardado no Agente)
