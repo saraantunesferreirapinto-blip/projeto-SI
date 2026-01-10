@@ -6,139 +6,109 @@ from Classes.perfil_paciente import Perfil_paciente
 class CyclicBehavAlerta(CyclicBehaviour):
     async def run(self):
         msg = await self.receive(timeout=10) 
-        
+
         if msg:
             performative = msg.get_metadata("performative")
-            
-            if performative == "inform":
-                perfil = jsonpickle.decode(msg.body)
-                
-                if not isinstance(perfil, Perfil_paciente):
-                    return
 
-                print(f"[ALERTA] A verificar doenças de: {perfil.nome}")
-                
-                mensagens_a_enviar = []
+            if performative == "inform":
+                conteudo = jsonpickle.decode(msg.body)
+
+                if isinstance(conteudo, dict) and "paciente" in conteudo:
+                    nome = conteudo.get("paciente")
+                    sinais = conteudo.get("sinais_vitais", {})
+                    
+                    print(f"[{self.agent.name}] 🔎 A analisar vitais de: {nome}")
+                    
+                    mensagens_a_enviar = []
 
                 # 1. GLICÓMETRO (DIABETES)
-                if perfil.dados_glicometro is not None:
+                valor_glic = sinais.get("glicometro")
+                if valor_glic is not None:
+                    problema = "Glicemia Estável"
                     
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "diab" in d.lower(): 
-                            doenca_encontrada = d
-                            break
-                    
-                    # Se encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_glicometro
-                        performative = "inform"
-                        problema = "Glicemia Controlada"
-
-                        if valor < 50 or valor > 300:
+                    if isinstance(valor_glic, int):
+                        if valor_glic < 50 or valor_glic > 300:
                             performative = "critico"
-                            problema = f"Glicemia EXTREMA ({valor})"
-                        elif valor > 180 or valor < 70:
+                            problema = f"Glicemia EXTREMA ({valor_glic})"
+                        elif valor_glic > 180 or valor_glic < 70:
                             performative = "urgente"
-                            problema = f"Glicemia Descontrolada ({valor})"
-                        
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil 
-                            }
-                        })
+                            problema = f"Glicemia Descontrolada ({valor_glic})"
+                    
+                    
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "diabetes",
+                            "problema": problema,
+                            "valor": valor_glic,
+                            "conteudo_completo": conteudo 
+                        }
+                    })
 
                 # 2. TENSIÓMETRO (HIPERTENSÃO)
-                if perfil.dados_tensiometro is not None:
+                valor_tens = sinais.get("tensiometro")
+                if valor_tens is not None:
+                    problema = "Tensão Normal"
                     
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "hiper" in d.lower() or "tens" in d.lower():
-                            doenca_encontrada = d
-                            break
-                    
-                    # Se encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_tensiometro
-                        performative = "inform"
-                        problema = "Tensão Controlada"
+                    try:
+                        if isinstance(valor_tens, str) and "/" in valor_tens:
+                            sys, dia = map(int, valor_tens.split('/'))
+                            if sys > 180 or dia > 110:
+                                performative = "critico"
+                                problema = f"CRISE HIPERTENSIVA ({valor_tens})"
+                            elif sys > 140 or dia > 90:
+                                performative = "urgente"
+                                problema = f"Tensão Elevada ({valor_tens})"
+                    except:
+                        pass
 
-                        try:
-                            if isinstance(valor, str) and "/" in valor:
-                                sys, dia = map(int, valor.split('/'))
-                                
-                                if sys > 180 or dia > 110:
-                                    performative = "critico"
-                                    problema = f"CRISE HIPERTENSIVA ({valor})"
-                                elif sys > 140 or dia > 90:
-                                    performative = "urgente"
-                                    problema = f"Tensão Elevada ({valor})"
-                        except:
-                            pass
-
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil 
-                            }
-                        })
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "hipertensao",
+                            "problema": problema,
+                            "valor": valor_tens,
+                            "conteudo_completo": conteudo 
+                        }
+                    })
 
                 # OXÍMETRO (DPOC)
-                if perfil.dados_oximetro is not None:
+                valor_oxi = sinais.get("oximetro")
+                if valor_oxi is not None:
+                    problema = "Saturação OK"
                     
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "dpoc" in d.lower():
-                            doenca_encontrada = d
-                            break
-                    
-                    # Se encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_oximetro
-                        performative = "inform"
-                        problema = "Saturação O2 Normal"
-
-                        if valor < 85:
+                    if isinstance(valor_oxi, int):
+                        if valor_oxi < 85:
                             performative = "critico"
-                            problema = f"Hipoxia Severa ({valor}%)"
-                        elif valor < 90:
+                            problema = f"Hipoxia Severa ({valor_oxi}%)"
+                        elif valor_oxi < 90:
                             performative = "urgente"
-                            problema = f"Saturação Baixa ({valor}%)"
+                            problema = f"Saturação Baixa ({valor_oxi}%)"
 
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil # <--- OBRIGATÓRIO: Envia o perfil
-                            }
-                        })
-
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "dpoc",
+                            "problema": problema,
+                            "valor": valor_oxi,
+                            "conteudo_completo": conteudo
+                        }
+                    })
                 # ENVIO DE TODAS AS MENSAGENS GERADAS
-                medico_jid = self.agent.get("medico_jid")
+                destino = self.agent.get("plataforma_jid")
+
                 
-                if medico_jid and mensagens_a_enviar:
+                if destino and mensagens_a_enviar:
                     for item in mensagens_a_enviar:
-                        msg_out = Message(to=medico_jid)
+                        msg_out = Message(to=destino)
                         
                         # Define a Performative (inform, urgente, critico)
                         msg_out.set_metadata("performative", item["performative"])
                         
-                        # O Body leva tudo (doença + perfil + valor)
+                        # O Body leva tudo (doença + conteudo + valor)
                         msg_out.body = jsonpickle.encode(item["body"])
                         
                         await self.send(msg_out)
@@ -155,104 +125,80 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 mensagens_a_enviar = []
 
                 # GLICÓMETRO (DIABETES)
-                if perfil.dados_glicometro is not None:
-                    
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "diab" in d.lower(): 
-                            doenca_encontrada = d
-                            break
-                    
-                    # Se encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_glicometro
-                        performative = "critico"
-                        problema = "Falha no glicometro"
+                tem_diabetes = any("diab" in d.lower() for d in perfil.doencas)
                         
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil 
-                            }
-                        })
+                if tem_diabetes:
+                    # Se tem diabetes e recebemos failure, o sensor falhou
+                    performative = "critico"
+                    problema = "Falha na leitura do Glicómetro"
+                    valor = "N/A" # Não há valor numa falha
+                    
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "diabetes",
+                            "problema": problema,
+                            "valor": valor,
+                            "conteudo_completo": perfil # Enviamos o perfil para contexto
+                        }
+                    })
 
                 # TENSIÓMETRO (HIPERTENSÃO)
-                if perfil.dados_tensiometro is not None:
-                    
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "hiper" in d.lower() or "tens" in d.lower():
-                            doenca_encontrada = d
-                            break
-                    
-                    # Se encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_tensiometro
-                        performative = "critico"
-                        problema = "Falha no tensiometro"
+                tem_hipertensao = any(("hiper" in d.lower() or "tens" in d.lower()) for d in perfil.doencas)
+                        
+                if tem_hipertensao:
+                    performative = "critico"
+                    problema = "Falha na leitura do Tensiometro"
+                    valor = "N/A"
 
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil 
-                            }
-                        })
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "hipertensao",
+                            "problema": problema,
+                            "valor": valor,
+                            "conteudo_completo": perfil
+                        }
+                    })
 
                 # OXÍMETRO (DPOC)
-                if perfil.dados_oximetro is not None:
-                    
-                    # Procura a doença na lista
-                    doenca_encontrada = None
-                    for d in perfil.doencas:
-                        if "dpoc" in d.lower():
-                            doenca_encontrada = d
-                            break
-                    
-                    # encontrou, analisa e prepara mensagem
-                    if doenca_encontrada:
-                        valor = perfil.dados_oximetro
-                        performative = "crtico"
-                        problema = "Falha no oximetro"
+                tem_dpoc = any("dpoc" in d.lower() for d in perfil.doencas)
+                        
+                if tem_dpoc:
+                    performative = "critico"
+                    problema = "Falha na leitura do Oximtro"
+                    valor = "N/A"
 
-                        mensagens_a_enviar.append({
-                            "performative": performative,
-                            "body": {
-                                "tipo_alerta": performative.upper(),
-                                "doenca_detetada": doenca_encontrada,
-                                "problema": problema,
-                                "valor": valor,
-                                "perfil_completo": perfil
-                            }
-                        })
+                    mensagens_a_enviar.append({
+                        "performative": performative,
+                        "body": {
+                            "tipo_alerta": performative.upper(),
+                            "doenca_detetada": "dpoc",
+                            "problema": problema,
+                            "valor": valor,
+                            "conteudo_completo": perfil
+                        }
+                    })
 
-                # ENVIO DE TODAS AS MENSAGENS GERADAS
-                medico_jid = self.agent.get("plataforma_jid")
+                # MUDANÇA: ENVIO SEMPRE PARA A PLATAFORMA
+                destino = self.agent.get("plataforma_jid")
                 
-                if medico_jid and mensagens_a_enviar:
+                if destino and mensagens_a_enviar:
                     for item in mensagens_a_enviar:
-                        msg_out = Message(to=medico_jid)
+                        msg_out = Message(to=destino)
                         
-                        # Define a Performative (inform, urgente, critico)
+                        # Mantemos a performative (critico/urgente) para a plataforma saber a prioridade
                         msg_out.set_metadata("performative", item["performative"])
-                        
-                        # O Body leva tudo (doença + perfil + valor)
+                                                
                         msg_out.body = jsonpickle.encode(item["body"])
                         
                         await self.send(msg_out)
-                        print(f"--> Para plataforma ({item['performative']}): {item['body']['doenca_detetada']}")
+                        print(f"[{self.agent.name}] Encaminhado para a PLATAFORMA: {item['body']['problema']}")
 
             else:
                 print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
-        
+                
         else:
             print("Paciente: Nenhuma mensagem recebida recentemente.")

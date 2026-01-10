@@ -3,6 +3,8 @@ from spade.message import Message
 
 import asyncio
 import jsonpickle
+import math
+import time
 
 class CyclicBehavPlataforma(CyclicBehaviour):
 
@@ -13,79 +15,105 @@ class CyclicBehavPlataforma(CyclicBehaviour):
         msg = await self.receive(timeout=10)  # wait for a message for 10 seconds
 
         if msg:
-            # Message Threatment based on different Message performatives
+
             performative = msg.get_metadata("performative")
+            ####################################################################
+            #EXISTENCIA DO PACIENTE
+            ####################################################################
             if performative == "subscribe":  # verificar nome da performative ###########################################################################################333
-                paciente = jsonpickle.decode(msg.body)
-                self.agent.paciente_subscribe.append(paciente)
+                paciente_info = jsonpickle.decode(msg.body)
+                self.agent.paciente_subscribe.append(paciente_info)######criar no agente
                 print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent {} registered!".format(str(msg.sender)))################################sender
-            
+                #print(f"Plataforma {self.agent.jid}: Paciente {msg.sender} registado com sucesso!")
+            ####################################################################
+            #EXISTENCIA DO MEDICO
+            ####################################################################           
             elif performative == "propose":  # verificar nome da performative ###########################################################################################333
-                medico = jsonpickle.decode(msg.body)
-                self.agent.medico_subscribe.append(medico)
-                print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent {} registered!".format(str(msg.sender)))################################sender
-            
-            elif performative == "propose":  # Handle the taxi transportation conclusion
-                msg_taxi_info = jsonpickle.decode(msg.body)
-                for idx, taxi_info in enumerate(self.agent.taxis_subscribed):
-                    if taxi_info.getAgent() == msg_taxi_info.getAgent():
-                        print(
-                            "Agent {}:".format(str(self.agent.jid)) + " Agent {} just arrived!".format(str(msg.sender)))
+                medico_info = jsonpickle.decode(msg.body)
+                self.agent.medico_subscribe.append(medico_info)##############criar no agente
+                print("Agent {}:".format(str(self.agent.jid)) + " Medico Agent {} registered!".format(str(msg.sender)))################################sender
+                #print(f"Plataforma {self.agent.jid}: Médico {msg.sender} disponível no sistema!")
+            ####################################################################
+            #FAILURE
+            ####################################################################
+            elif performative == "failure":
+                # O remetente da mensagem (quem falhou, ex: o dispositivo ou paciente)
+                remetente = str(msg.sender)
 
-                        # Update selected Taxi info (i.e., Availability = False and Position = Destiny Position)
-                        self.agent.taxis_subscribed[idx] = msg_taxi_info
-                        break
+                if not hasattr(self.agent, "historico_falhas"):
+                    self.agent.historico_falhas = {}
 
-            elif performative == "request":  # Handle the Client transport request
-                print("Agent {}:".format(str(self.agent.jid)) + " Client Agent {} requested a transport!".format(
-                    str(msg.sender)))
-                transport_request = jsonpickle.decode(msg.body)
+                if remetente not in self.agent.historico_falhas:
+                    self.agent.historico_falhas[remetente] = []
 
-                # Search for closest available taxi
-                closestTaxi = None
-                list_pos = -1
-                dist_min = 1000.0
+                import time # Podes importar no topo do ficheiro também
+                agora = time.time()
+                self.agent.historico_falhas[remetente].append(agora)
+ 
+                num_falhas = len(self.agent.historico_falhas[remetente])
+                
+                print(f"PLATAFORMA: Registada falha de {remetente}. Total de falhas recentes: {num_falhas}")
+            ####################################################################
+            #ENVIO PARA O MEDICO
+            ####################################################################
+            elif performative in["urgente","critico","informativo"]:#verificar o nome da performative ############################################################################################################33
+                print(f"Plataforma: Alerta {performative.upper()} recebido de {msg.sender}")
+                dados_alerta=jsonpickle.decode(msg.body)
+                
+                # --- 1. Extração de Dados ---
+                doenca = dados_alerta["doenca_detetada"]
+                perfil_paciente= dados_alerta["conteudo_completo"]
+                jid_paciente = perfil_paciente.get("jid", "Desconhecido")
+                print(f"ALERTA {performative.upper()} recebido: {doenca} para o paciente {jid_paciente}")
 
-                # Calculate distance of each taxi with customer init position
-                for idx, taxi_info in enumerate(self.agent.taxis_subscribed):
-                    # Verify InformPosition of Taxi Agent presents Available as True (is the Taxi available or already blocked by another transport Request?)
-                    if taxi_info.isAvailable():
-                        distance = math.sqrt(
-                            math.pow(taxi_info.getPosition().getX() - transport_request.getInit().getX(), 2) +
-                            math.pow(taxi_info.getPosition().getY() - transport_request.getInit().getY(), 2)
-                        )
+                # --- 2. Mapeamento da Especialidade ---
+                especialidade=""
+                if doenca=="diabetes":
+                    especialidade="diabetes"
+                elif doenca=="hipertensão":
+                    especialidade="coração"
+                elif doenca=="hipóxia":
+                    especialidade="oxigénio"
+                
+                # --- 3. Filtrar Médicos Disponíveis ---
+                medicos_especialidade=[]
+                for m in self.agent.medico_subscribe:
+                    if m.especialidade==especialidade and m.disponibilidade==True:
+                        medicos_especialidade.append(m)
 
-                        if (dist_min > distance):
-                            closestTaxi = taxi_info
-                            list_pos = idx
-                            dist_min = distance
+                # --- 4. Calcular Distância (Euclidiana) ---
+                medico_atendimento=None
+                dist_min=1000
+                # Posição do PACIENTE (Vem do JSON como dicionário)
+                pos_paciente = perfil_paciente.get("posicao", {'x': 0, 'y': 0})
+                px = int(pos_paciente.get('x', 0))
+                py = int(pos_paciente.get('y', 0))
 
-                # Taxi Available = send request
-                if list_pos > -1:
-                    print("Agent {}:".format(
-                        str(self.agent.jid)) + " Taxi Agent {} selected for Transport Request!".format(
-                        closestTaxi.getAgent()))
+                for medico in medicos_especialidade:
+                    if medico.posicao: # Verifica se o médico tem posição definida
+                        mx = medico.posicao.x
+                        my = medico.posicao.y
+                        
+                        d = math.sqrt(math.pow(mx - px, 2) + math.pow(my - py, 2))
+                        
+                        print(f"   -> Médico {medico.nome} ({medico.jid_medico}) está a {d:.2f}m")
 
-                    msg = Message(to=closestTaxi.getAgent())  # Instantiate the message
-                    msg.body = jsonpickle.encode(transport_request)  # Set the message content (serialized object)
-                    msg.set_metadata("performative", "request")  # Set the message performative
-                    await self.send(msg)
+                        if d < dist_min:
+                            dist_min = d
+                            medico_atendimento = medico
+                    else:
+                        print(f"   -> Médico {medico.nome} ignorado (sem posição definida).")        
 
-                    # Update selected Taxi info (i.e., Availability = False and Position = Destiny Position)
-                    # self.agent.taxis_subscribed[list_pos] = InformPosition(closestTaxi.getAgent(), transport_request.getDest(), False)
-                    self.agent.taxis_subscribed[list_pos].setAvailable(False)
-                    self.agent.taxis_subscribed[list_pos].setPosition(transport_request.getDest())
+                # --- 5. Enviar Mensagem ---
+                if medico_atendimento:
+                    # Usamos o atributo jid_medico da tua classe
+                    destinatario_jid = str(medico_atendimento.jid_medico)
+                    
+                    msg_para_medico = Message(to=destinatario_jid)
+                    msg_para_medico.set_metadata("performative", performative)
+                    msg_para_medico.body = jsonpickle.encode(dados_alerta)
+                    
+                    await self.send(msg_para_medico)
 
-                # No Taxi Available = send refuse
-                else:
-                    print("Agent {}:".format(str(self.agent.jid)) + " No Taxis available!")
-                    msg = msg.make_reply()
-                    msg.set_metadata("performative", "refuse")
-                    await self.send(msg)
-
-            else:
-                print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
-
-        else:
-            print("Agent {}:".format(str(self.agent.jid)) + "Did not received any message after 10 seconds")
-            self.kill()
+                    print(f"--- SUCESSO ---")
+                    print(f"Alerta enviado para: {medico_atendimento.nome} (Dist: {dist_min:.1f})")        

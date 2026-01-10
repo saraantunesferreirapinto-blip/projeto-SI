@@ -11,11 +11,10 @@ class CyclicBehavPaciente(CyclicBehaviour):
 
         if msg:
             performative = msg.get_metadata("performative")
-            
-            if performative == "inform":
+
+            if performative == "inform" or performative is None:
                 # Descodifica o JSON
                 conteudo = jsonpickle.decode(msg.body)
-
                 tipo = conteudo.get("tipo_dispositivo")
                 valor = conteudo.get("valor")
                 remetente = msg.sender  # O JID de quem enviou (ex: tensiometro@server)
@@ -28,6 +27,14 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 # Verifica como ficou o relatório atual
                 relatorio = self.agent.meu_perfil.formatar_relatorio()
                 print(f"    Estado Atual do Paciente: {relatorio['sinais_vitais']}")
+
+                # Enviar para o GESTOR DE ALERTAS (para análise de risco)
+                if hasattr(self.agent, "jid_alerta") and self.agent.jid_alerta:
+                    msg_alert = Message(to=self.agent.jid_alerta)
+                    msg_alert.set_metadata("performative", "inform")
+                    msg_alert.body = jsonpickle.encode(relatorio) 
+                    await self.send(msg_alert)
+                    print(f"[Envio] Dados encaminhados para: {self.agent.jid_alerta}")
 
             elif performative == "failure":
 
@@ -46,7 +53,7 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 relatorio = self.agent.meu_perfil.formatar_relatorio()
                 print(f"    Estado Atual do Paciente: {relatorio['sinais_vitais']}")
 
-                msg = Message(to=self.agent.jid_plataforma)
+                msg = Message(to=self.agent.get("jid_plataforma"))
                 msg.set_metadata("performative", "failure")
                 msg.body = jsonpickle.encode(relatorio)
 

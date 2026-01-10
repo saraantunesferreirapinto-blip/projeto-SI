@@ -7,8 +7,18 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
 
     async def run(self):
         tipo = self.agent.tipo_dispositivo 
-        valor = None
 
+        #Para quem enviar valores
+        destino = self.agent.jid_paciente 
+        if not destino:
+            print(f"[{self.agent.name}] Erro: Sem Paciente configurado.")
+            return
+        
+        # --- DEBUG: Ver para onde estamos a enviar ---
+        print(f"DEBUG: O {self.agent.name} vai enviar para: '{destino}'")
+
+        valor = None
+        
         if random.random() < 0.2: 
             # SIMULAÇÃO DE ERRO
             payload = {
@@ -33,15 +43,15 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
                 valor = random.randint(70, 140)
                 
             elif tipo == "oximetro":
-                valor = random.randint(90, 100)
+                valor = random.randint(80, 100)
 
             if valor:
                 payload = {
                     "tipo_dispositivo": tipo,
                     "valor": valor
                 }
-                
-                msg = Message(to=self.agent.jid_paciente)
+                print(f"[{self.agent.name}] Gerou valor: {valor}")
+                msg = Message(to=destino)
                 msg.set_metadata("performative", "inform")
                 msg.body = jsonpickle.encode(payload)
             

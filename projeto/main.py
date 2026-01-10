@@ -11,7 +11,7 @@ from Classes.perfil_paciente import Perfil_paciente
 from Classes.perfil_medico import Perfil_medico 
 
 
-XMPP_SERVER = 'desktop-NIKN4PF'
+XMPP_SERVER = 'laptop-rgqb7m90'
 PASSWORD = 'NOPASSWORD'
 
 async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
@@ -23,40 +23,44 @@ async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
     escolhas = input("Patologias: ")
     
     lista_doencas = []
-    lista_sensores = []
-    mapa = {"1": ("glicometro", "diabetes"), "2": ("tensiometro", "hipertensao"), "3": ("oximetro", "dpoc")}
+
+    mapa = {
+        "1": "diabetes", 
+        "2": "hipertensao", 
+        "3": "dpoc"
+    }
 
     for item in escolhas.split(','):
         ch = item.strip()
         if ch in mapa:
-            classe_d, nome_d = mapa[ch]
-            lista_sensores.append(classe_d())
+            nome_d = mapa[ch]
             lista_doencas.append(nome_d)
 
-    # CRIAR O PERFIL
+    for doenca in lista_doencas:
+        tipo_sensor = ""
+        if doenca == "diabetes": tipo_sensor = "glicometro"
+        elif doenca == "hipertensao": tipo_sensor = "tensiometro" 
+        elif doenca == "dpoc": tipo_sensor = "oximetro"
+        
+        if tipo_sensor:
+            # Cria um nome único para o dispositivo
+            dev_jid = f"{tipo_sensor}_{id_sugestao}@{XMPP_SERVER}"
+            # O dispositivo tem de saber para quem enviar (paciente_jid)
+            dev_agent = DispositivoAgent(dev_jid, PASSWORD, tipo_sensor, paciente_jid)
+            await dev_agent.start()
+            print(f"   -> Dispositivo {tipo_sensor} ativado.")
+
     perfil = Perfil_paciente(paciente_jid, nome=nome, doencas=lista_doencas)
     
-    # CRIAR E CONFIGURAR O AGENTE PACIENTE
-    # Nota: Só passamos JID e Password. Não passamos o perfil aqui.
-    paciente_agent = PacienteAgent(paciente_jid, PASSWORD)
+    plat_jid = f"plataforma@{XMPP_SERVER}"
+
+    # Passar tudo no construtor como definiste na classe
+    paciente_agent = PacienteAgent(paciente_jid, PASSWORD, perfil, plat_jid)
     
-    # INJEÇÃO DIRETA: "Colamos" o perfil ao agente
-    paciente_agent.meu_perfil = perfil
-    paciente_agent.jid_alerta = f"gestor_alertas@{XMPP_SERVER}" # Definir destino de alertas
+    paciente_agent.jid_alerta = f"gestor_alertas@{XMPP_SERVER}"
     
     await paciente_agent.start()
-
-    # CRIAR E CONFIGURAR O AGENTE DISPOSITIVO
-    disp_jid = f"disp_{id_sugestao}@{XMPP_SERVER}"
-    dispositivo_agent = DispositivoAgent(disp_jid, PASSWORD)
-    
-    # INJEÇÃO DIRETA
-    dispositivo_agent.sensores = lista_sensores # Passamos a lista de sensores
-    dispositivo_agent.jid_destino = paciente_jid # Dizemos para onde enviar dados
-    
-    await dispositivo_agent.start()
-    
-    return [paciente_agent, dispositivo_agent]
+    return [paciente_agent]
 
 async def main():
     agentes_ativos = []
@@ -76,12 +80,11 @@ async def main():
 
     # --- ALERTA ---
     alerta_jid = f"gestor_alertas@{XMPP_SERVER}"
-    alerta_agent = AlertaAgent(alerta_jid, PASSWORD)
-    # Se o alerta precisar de variáveis, define aqui:
-    # alerta_agent.lista_erros = [] 
+    
+    alerta_agent = AlertaAgent(alerta_jid, PASSWORD, plataforma_jid)
     
     await alerta_agent.start()
-    agentes_ativos.append(alerta_agent)
+    agentes_ativos.append(alerta_agent) # Adicionar à lista
     print(f"Gestor de Alertas iniciado: {alerta_jid}")
 
     print("A iniciar Sistema...")

@@ -5,20 +5,18 @@ from Behaviour.periodic_paciente import PeriodicBehavPaciente
 
 class PacienteAgent(Agent):
 
-    def __init__(self, jid, password, nome_paciente, doencas_paciente, jid_plataforma):
+    def __init__(self, jid, password, perfil, jid_plataforma):
         super().__init__(jid, password)
-        self.nome_inicial = nome_paciente
-        self.doencas_inicial = doencas_paciente
+        self.meu_perfil = perfil
         
-        # Guardar o contacto da plataforma
-        self.set("jid_plataforma", jid_plataforma)
+        # CORRETO (Cria o atributo que o comportamento está à procura):
+        self.jid_plataforma = jid_plataforma
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")
         a = CyclicBehavPaciente()
         b = OneShotBehavPaciente()
-        c = PeriodicBehavPaciente(period=1)
+        c = PeriodicBehavPaciente(period=5)
         self.add_behaviour(a)
         self.add_behaviour(b)
         self.add_behaviour(c)
-

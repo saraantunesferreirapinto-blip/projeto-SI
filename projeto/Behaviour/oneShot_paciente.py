@@ -12,29 +12,26 @@ class OneShotBehavPaciente(OneShotBehaviour):
         y = random.randint(1, 100)
         posicao_inicial = Position(x, y)
 
-        # CRIAR O PERFIL DO PACIENTE
-        print(f"[{self.agent.name}] A criar perfil do paciente...")
         
-        # Guardamos no self.agent para que o CyclicBehaviour e o PeriodicBehaviour o vejam depois!
-        self.agent.meu_perfil = Perfil_paciente(
-            jid_paciente=str(self.agent.jid),
-            nome=f"Paciente_{self.agent.name}", # Nome genérico baseado no JID
-            doencas=["Diabetes", "Hipertensao", "DPOC"]  
-        )
-        
-        # Atualizamos a posição no perfil criado
-        self.agent.meu_perfil.posicao_atual = posicao_inicial
+        # 2. USAR O PERFIL QUE VEIO DA MAIN
+        # Em vez de criar um novo (o que apagaria o nome "Maria"),
+        # nós apenas adicionamos a posição ao perfil que já existe!
+        if hasattr(self.agent, "meu_perfil") and self.agent.meu_perfil:
+            print(f"[{self.agent.name}] A definir posição inicial para {self.agent.meu_perfil.nome}...")
+            self.agent.meu_perfil.posicao_atual = posicao_inicial
+        else:
+            print(f"[{self.agent.name}] ERRO CRÍTICO: Perfil não encontrado! (Verifique o __init__ do Agente)")
+            return
 
-        # Preparar a Mensagem de Subscrição (Registo na Plataforma)
-        destino = self.agent.get("service_contact")
+        # 3. REGISTAR NA PLATAFORMA
+        destino = self.agent.get("jid_plataforma")
         
         if destino:
             msg = Message(to=destino)
             msg.set_metadata("performative", "subscribe")
             
             # Enviamos o relatório inicial formatado para a plataforma saber quem somos e o que temos.
-            dados_iniciais = self.agent.meu_perfil.formatar_relatorio()
-            msg.body = jsonpickle.encode(dados_iniciais)
+            msg.body = jsonpickle.encode(self.agent.meu_perfil)
 
             await self.send(msg)
             print(f"[{self.agent.name}] Subscreveu à Plataforma ({destino}) com posição {x},{y}")
