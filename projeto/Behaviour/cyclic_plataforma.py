@@ -6,6 +6,7 @@ import jsonpickle
 import math
 import time
 
+
 class CyclicBehavPlataforma(CyclicBehaviour):
 
     async def on_end(self):
@@ -32,7 +33,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
             if performative == "subscribe":  # verificar nome da performative ###########################################################################################333
                 paciente_info = jsonpickle.decode(msg.body)
                 self.agent.paciente_subscribe.append(paciente_info)######criar no agente
-                print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent {} registered!".format(str(msg.sender)))################################sender
+                print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent {} registered!".format(remetente))################################
                 
                 reply = msg.make_reply()
                 reply.set_metadata("performative", "agree") # 'agree' confirma a subscrição
@@ -62,7 +63,6 @@ class CyclicBehavPlataforma(CyclicBehaviour):
             #FAILURE
             ####################################################################
             elif performative == "failure":
-                remetente = str(msg.sender)
                 try:
                     conteudo_falha = jsonpickle.decode(msg.body)
                 except:
@@ -148,7 +148,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                         "status": "pendente"
                     }
                     
-                    msg_para_medico = Message(to=jid_destino)
+                    msg_para_medico = Message(to=destinatario_jid)
                     msg_para_medico.set_metadata("performative", performative)
                     msg_para_medico.body = jsonpickle.encode(dados_dict)
                     
