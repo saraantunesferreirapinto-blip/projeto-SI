@@ -153,7 +153,6 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     msg_para_medico.body = jsonpickle.encode(dados_dict)
                     
                     await self.send(msg_para_medico)
-
                     print(f"--- SUCESSO ---")
                     print(f"Alerta enviado para: {medico_final.nome} (Dist: {dist_min:.1f})")  
 
