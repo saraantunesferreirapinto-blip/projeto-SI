@@ -24,7 +24,7 @@ class OneShotBehavPaciente(OneShotBehaviour):
             return
 
         # 3. REGISTAR NA PLATAFORMA
-        destino = self.agent.get("jid_plataforma")
+        destino = self.agent.jid_plataforma # Acede diretamente à variável criada no __init__ 
         
         if destino:
             msg = Message(to=destino)

@@ -5,7 +5,7 @@ from Behaviour.periodic_plataforma import PeriodicBehavPlataforma
 class PlataformaAgent(Agent):
 
     paciente_subscribe = []
-    medico_subscribe = []
+    medico_subscribe = {}    
     historico_falhas = {}
 
     async def setup(self):

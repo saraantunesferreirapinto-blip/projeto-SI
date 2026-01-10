@@ -5,12 +5,13 @@ from Behaviour.periodic_paciente import PeriodicBehavPaciente
 
 class PacienteAgent(Agent):
 
-    def __init__(self, jid, password, perfil, jid_plataforma):
+    def __init__(self, jid, password, perfil, jid_plataforma, alerta_jid):
         super().__init__(jid, password)
         self.meu_perfil = perfil
         
         # CORRETO (Cria o atributo que o comportamento está à procura):
         self.jid_plataforma = jid_plataforma
+        self.jid_alerta = alerta_jid
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")
