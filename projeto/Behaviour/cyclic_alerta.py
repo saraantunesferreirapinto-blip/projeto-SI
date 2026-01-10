@@ -1,12 +1,12 @@
 import jsonpickle
 from spade.behaviour import CyclicBehaviour
 from spade.message import Message
-from Classes.perfil_paciente import Perfil_paciente 
+from Classes.alerta import Alerta
 import time
 
 class CyclicBehavAlerta(CyclicBehaviour):
     async def run(self):
-        msg = await self.receive(timeout=10) 
+        msg = await self.receive(timeout=5) 
 
         if msg:
             performative = msg.get_metadata("performative")
@@ -27,28 +27,22 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 if valor_glic is not None:
                     problema = "Glicemia Estável"
                     performative = "informativo"
+                    if valor_glic < 50 or valor_glic > 300:
+                        performative = "critico"
+                        problema = f"Glicemia EXTREMA ({valor_glic})"
+                    elif valor_glic > 180 or valor_glic < 70:
+                        performative = "urgente"
+                        problema = f"Glicemia Descontrolada ({valor_glic})"
                     
-                    if isinstance(valor_glic, int):
-                        if valor_glic < 50 or valor_glic > 300:
-                            performative = "critico"
-                            problema = f"Glicemia EXTREMA ({valor_glic})"
-                        elif valor_glic > 180 or valor_glic < 70:
-                            performative = "urgente"
-                            problema = f"Glicemia Descontrolada ({valor_glic})"
-                    
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
-                    
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "diabetes",
-                            "problema": problema,
-                            "valor": valor_glic,
-                            "conteudo_completo": conteudo 
-                        }
-                    })
+                    novo_alerta = Alerta(
+                                agente_nome=self.agent.name,
+                                performative=performative,
+                                doenca="diabetes",
+                                problema=problema,
+                                valor=valor_glic,
+                                conteudo=conteudo
+                            )
+                    mensagens_a_enviar.append(novo_alerta)
 
                 # 2. TENSIÓMETRO (HIPERTENSÃO)
                 valor_tens = sinais.get("tensiometro")
@@ -68,19 +62,15 @@ class CyclicBehavAlerta(CyclicBehaviour):
                     except:
                         pass
 
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
-
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "hipertensao",
-                            "problema": problema,
-                            "valor": valor_tens,
-                            "conteudo_completo": conteudo 
-                        }
-                    })
+                    novo_alerta = Alerta(
+                                agente_nome=self.agent.name,
+                                performative=performative,
+                                doenca="hipertensao",
+                                problema=problema,
+                                valor=valor_tens,
+                                conteudo=conteudo
+                            )
+                    mensagens_a_enviar.append(novo_alerta)
 
                 # OXÍMETRO (DPOC)
                 valor_oxi = sinais.get("oximetro")
@@ -96,19 +86,16 @@ class CyclicBehavAlerta(CyclicBehaviour):
                             performative = "urgente"
                             problema = f"Saturação Baixa ({valor_oxi}%)"
 
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
+                    novo_alerta = Alerta(
+                                agente_nome=self.agent.name,
+                                performative=performative,
+                                doenca="dpoc",
+                                problema=problema,
+                                valor=valor_oxi,
+                                conteudo=conteudo
+                            )
+                    mensagens_a_enviar.append(novo_alerta)
 
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "dpoc",
-                            "problema": problema,
-                            "valor": valor_oxi,
-                            "conteudo_completo": conteudo
-                        }
-                    })
                 # ENVIO DE TODAS AS MENSAGENS GERADAS
                 destino = self.agent.get("plataforma_jid")
 
@@ -117,87 +104,56 @@ class CyclicBehavAlerta(CyclicBehaviour):
                         msg_out = Message(to=destino)
                         
                         # Define a Performative (inform, urgente, critico)
-                        msg_out.set_metadata("performative", item["performative"])
+                        msg_out.set_metadata("performative", item._performative_envio)
                         
                         # O Body leva tudo (doença + conteudo + valor)
-                        msg_out.body = jsonpickle.encode(item["body"])
+                        msg_out.body = jsonpickle.encode(item.dict())
                         
                         await self.send(msg_out)
-                        print(f"--> Para Médico ({item['performative']}): {item['body']['doenca_detetada']}")
+                        print(f"--> Para Médico ({item._performative_envio}): {item.doenca_detetada}")
 
             elif performative == "failure":
                 perfil = jsonpickle.decode(msg.body)
                 
-                if not isinstance(perfil, Perfil_paciente):
-                    return
-
-                print(f"[ALERTA] A verificar doenças de: {perfil.nome}")
-                
                 mensagens_a_enviar = []
 
                 # GLICÓMETRO (DIABETES)
-                tem_diabetes = any("diab" in d.lower() for d in perfil.doencas)
-                        
-                if tem_diabetes:
-                    # Se tem diabetes e recebemos failure, o sensor falhou
-                    performative = "critico"
-                    problema = "Falha na leitura do Glicómetro"
-                    valor = "N/A" # Não há valor numa falha
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_glic"
-                    
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "diabetes",
-                            "problema": problema,
-                            "valor": valor,
-                            "conteudo_completo": perfil # Enviamos o perfil para contexto
-                        }
-                    })
+                if any("diab" in d.lower() for d in perfil.doencas):
+                    # Cria o objeto Alerta diretamente
+                    # Nota: Valor é "N/A" e performative é sempre "critico"
+                    novo_alerta = Alerta(
+                        agente_nome=self.agent.name,
+                        performative="critico",
+                        doenca="diabetes",
+                        problema="Falha na leitura do Glicómetro",
+                        valor="N/A",
+                        conteudo=perfil
+                    )
+                    mensagens_a_enviar.append(novo_alerta)
 
                 # TENSIÓMETRO (HIPERTENSÃO)
-                tem_hipertensao = any(("hiper" in d.lower() or "tens" in d.lower()) for d in perfil.doencas)
-                        
-                if tem_hipertensao:
-                    performative = "critico"
-                    problema = "Falha na leitura do Tensiometro"
-                    valor = "N/A"
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_tens"
-
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "hipertensao",
-                            "problema": problema,
-                            "valor": valor,
-                            "conteudo_completo": perfil
-                        }
-                    })
+                if any(("hiper" in d.lower() or "tens" in d.lower()) for d in perfil.doencas):
+                    novo_alerta = Alerta(
+                        agente_nome=self.agent.name,
+                        performative="critico",
+                        doenca="hipertensao",
+                        problema="Falha na leitura do Tensiómetro",
+                        valor="N/A",
+                        conteudo=perfil
+                    )
+                    mensagens_a_enviar.append(novo_alerta)
 
                 # OXÍMETRO (DPOC)
-                tem_dpoc = any("dpoc" in d.lower() for d in perfil.doencas)
-                        
-                if tem_dpoc:
-                    performative = "critico"
-                    problema = "Falha na leitura do Oximtro"
-                    valor = "N/A"
-                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_oxi"
-
-                    mensagens_a_enviar.append({
-                        "performative": performative,
-                        "body": {
-                            "id_alerta": id_unico,
-                            "tipo_alerta": performative.upper(),
-                            "doenca_detetada": "dpoc",
-                            "problema": problema,
-                            "valor": valor,
-                            "conteudo_completo": perfil
-                        }
-                    })
+                if any("dpoc" in d.lower() for d in perfil.doencas):
+                    novo_alerta = Alerta(
+                        agente_nome=self.agent.name,
+                        performative="critico",
+                        doenca="dpoc",
+                        problema="Falha na leitura do Oxímetro",
+                        valor="N/A",
+                        conteudo=perfil
+                    )
+                    mensagens_a_enviar.append(novo_alerta)
 
                 # MUDANÇA: ENVIO SEMPRE PARA A PLATAFORMA
                 destino = self.agent.get("plataforma_jid")
@@ -207,12 +163,11 @@ class CyclicBehavAlerta(CyclicBehaviour):
                         msg_out = Message(to=destino)
                         
                         # Mantemos a performative (critico/urgente) para a plataforma saber a prioridade
-                        msg_out.set_metadata("performative", item["performative"])
-                                                
-                        msg_out.body = jsonpickle.encode(item["body"])
+                        msg_out.set_metadata("performative", item._performative_envio)
+                        msg_out.body = jsonpickle.encode(item.dict())
                         
                         await self.send(msg_out)
-                        print(f"[{self.agent.name}] Encaminhado para a PLATAFORMA: {item['body']['problema']}")
+                        print(f"[{self.agent.name}] Encaminhado para a PLATAFORMA: {item.problema}")
 
             else:
                 print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
