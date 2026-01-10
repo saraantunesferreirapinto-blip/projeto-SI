@@ -10,7 +10,13 @@ class CyclicBehavPaciente(CyclicBehaviour):
         msg = await self.receive(timeout=10)
 
         if msg:
+            conteudo = jsonpickle.decode(msg.body)
             performative = msg.get_metadata("performative")
+
+            if "recomendacao" in conteudo:
+                medico = conteudo.get("medico", "Desconhecido")
+                rec = conteudo.get("recomendacao")
+                print(f"\n[NOTIFICAÇÃO MÉDICA] O médico {medico} recomenda: {rec}\n")
 
             if performative == "inform" or performative is None:
                 # Descodifica o JSON

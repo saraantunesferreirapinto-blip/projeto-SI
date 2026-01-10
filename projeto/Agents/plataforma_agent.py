@@ -7,6 +7,7 @@ class PlataformaAgent(Agent):
     paciente_subscribe = []
     medico_subscribe = []
     historico_falhas = {}
+    alertas_pendentes = {}
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")

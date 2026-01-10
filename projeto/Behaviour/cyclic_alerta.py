@@ -25,6 +25,7 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 valor_glic = sinais.get("glicometro")
                 if valor_glic is not None:
                     problema = "Glicemia Estável"
+                    performative = "informativo"
                     
                     if isinstance(valor_glic, int):
                         if valor_glic < 50 or valor_glic > 300:
@@ -50,6 +51,7 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 valor_tens = sinais.get("tensiometro")
                 if valor_tens is not None:
                     problema = "Tensão Normal"
+                    performative = "informativo"
                     
                     try:
                         if isinstance(valor_tens, str) and "/" in valor_tens:
@@ -78,6 +80,7 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 valor_oxi = sinais.get("oximetro")
                 if valor_oxi is not None:
                     problema = "Saturação OK"
+                    performative = "informativo"
                     
                     if isinstance(valor_oxi, int):
                         if valor_oxi < 85:

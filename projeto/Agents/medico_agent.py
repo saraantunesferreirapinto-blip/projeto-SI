@@ -5,7 +5,10 @@ from Behaviour.oneShot_medico import oneShotBehavMedico
 
 class MedicoAgent(Agent):
 
-    taxis_subscribed = []
+    def __init__(self, jid, password, perfil, plataforma_jid):
+        super().__init__(jid, password)
+        self.perfil = perfil
+        self.plataforma_jid = plataforma_jid
 
     async def setup(self):
         print(f"agente customer iniciado: {self.jid}")

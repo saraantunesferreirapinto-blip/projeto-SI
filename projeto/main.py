@@ -48,19 +48,64 @@ async def criar_paciente_terminal(XMPP_SERVER, PASSWORD, id_sugestao):
             # O dispositivo tem de saber para quem enviar (paciente_jid)
             dev_agent = DispositivoAgent(dev_jid, PASSWORD, tipo_sensor, paciente_jid)
             await dev_agent.start()
-            print(f"   -> Dispositivo {tipo_sensor} ativado.")
+            print(f"Dispositivo {tipo_sensor} ativado.")
 
     perfil = Perfil_paciente(paciente_jid, nome=nome, doencas=lista_doencas)
     
     plat_jid = f"plataforma@{XMPP_SERVER}"
+    alerta_jid = f"gestor_alertas@{XMPP_SERVER}"
 
     # Passar tudo no construtor como definiste na classe
-    paciente_agent = PacienteAgent(paciente_jid, PASSWORD, perfil, plat_jid)
+    paciente_agent = PacienteAgent(paciente_jid, PASSWORD, perfil, plat_jid, alerta_jid)
     
     paciente_agent.jid_alerta = f"gestor_alertas@{XMPP_SERVER}"
     
     await paciente_agent.start()
     return [paciente_agent]
+
+async def criar_equipa_medica(plataforma_jid):
+    print("\n--- A INICIAR EQUIPA MÉDICA ---")
+    
+    # Lista de Médicos a criar (2 por especialidade)
+    # Estrutura: (Nome, Especialidade)
+    equipa = [
+        ("Dr. Silva", "Endocrinologia"),   # Para Diabetes
+        ("Dra. Santos", "Endocrinologia"), # Para Diabetes (Backup)
+        
+        ("Dr. Costa", "Cardiologia"),      # Para Hipertensão
+        ("Dra. Pereira", "Cardiologia"),   # Para Hipertensão (Backup)
+        
+        ("Dr. Oliveira", "Pneumologia"),   # Para DPOC
+        ("Dra. Ferreira", "Pneumologia")   # Para DPOC (Backup)
+    ]
+
+    agentes_medicos = []
+
+    for nome, especialidade in equipa:
+        # Criar um JID único sem espaços
+        user_id = f"medico_{nome.lower().replace(' ', '').replace('.', '')}"
+        medico_jid = f"{user_id}@{XMPP_SERVER}"
+
+        # Criar o Perfil
+        perfil_med = Perfil_medico(
+            jid_medico=medico_jid, 
+            nome=nome, 
+            especialidade=especialidade
+        )
+        
+        # Inicializar Agente
+        # Nota: Passamos plataforma_jid para ele saber onde se registar
+        medico_agent = MedicoAgent(medico_jid, PASSWORD, perfil=perfil_med, plataforma_jid=plataforma_jid)
+        
+        await medico_agent.start()
+        agentes_medicos.append(medico_agent)
+        
+        print(f"   -> {nome} ({especialidade}) entrou ao serviço.")
+        # Pequena pausa para não "encavalar" os registos na consola
+        await asyncio.sleep(0.2) 
+        
+    print("------------------------------------------------\n")
+    return agentes_medicos
 
 async def main():
     agentes_ativos = []
@@ -87,6 +132,14 @@ async def main():
     agentes_ativos.append(alerta_agent) # Adicionar à lista
     print(f"Gestor de Alertas iniciado: {alerta_jid}")
 
+    # 3. INICIAR EQUIPA MÉDICA (AUTOMÁTICO) 🚑
+    medicos = await criar_equipa_medica(plataforma_jid)
+    agentes_ativos.extend(medicos)
+    
+    # Esperar um pouco para garantir que todos os médicos se registam na plataforma
+    print("⏳ A aguardar registo dos médicos na rede...")
+    await asyncio.sleep(2)
+
     print("A iniciar Sistema...")
     
     # Mínimo 3 Pacientes 
@@ -95,50 +148,8 @@ async def main():
         novos_agentes = await criar_paciente_terminal(XMPP_SERVER, PASSWORD, i)
         agentes_ativos.extend(novos_agentes)
 
-    print("\n 3 pacientes cridispositivo_agentos. Sistema em execução.")
-
-    # Menu de Gestão (Médicos e Pacientes dispositivo_agenticionais)
-    try:
-        while True:
-            print("\n[MENU] 1: dispositivo_agenticionar Médico | 2: dispositivo_agenticionar Paciente | 3: Sair")
-            opcao = await asyncio.get_event_loop().run_in_executor(None, input, "Escolha: ")
-
-            if opcao == "1":
-                nome_med = input("Nome do Médico: ")
-                especialidade = input("Especialidade (ex: Cardiologia): ")
-                
-                medico_jid = f"medico_{nome_med.lower()}@{XMPP_SERVER}"
-
-                perfil_med = Perfil_medico(
-                    jid_medico=medico_jid, 
-                    nome=nome_med, 
-                    especialidade=especialidade
-                )
-                
-                # Inicializar o Agente Médico
-                medico_agent = MedicoAgent(medico_jid, PASSWORD, perfil=perfil_med)
-                
-                await medico_agent.start()
-                agentes_ativos.append(medico_agent)
-                
-                print(f"Médico {nome_med} ({especialidade}) registado com sucesso.")
-                
-                time.sleep(1)
-
-            elif opcao == "2":
-                novo_id = len([a for a in agentes_ativos if isinstance(a, PacienteAgent)]) + 1
-                novos = await criar_paciente_terminal(XMPP_SERVER, PASSWORD, novo_id)
-                agentes_ativos.extend(novos)
-
-            elif opcao == "3":
-                break
-    except KeyboardInterrupt:
-        print("\nStopping...")
-    finally:
-        print("A encerrar agentes...")
-        for agente in agentes_ativos:
-            await agente.stop()
-        print("Todos os agentes foram desligdispositivo_agentos.")
-
+    print("\n 3 pacientes criados. Sistema em execução.")
+    await asyncio.sleep(1)
+    
 if __name__ == "__main__":
     asyncio.run(main())
