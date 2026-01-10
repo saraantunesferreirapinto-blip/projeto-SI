@@ -13,6 +13,14 @@ class CyclicBehavMedico(CyclicBehaviour):
             performative = msg.get_metadata("performative")
         
             dados_paciente = jsonpickle.decode(msg.body)
+<<<<<<< HEAD
+=======
+
+            id_alerta_recebido = dados_paciente.get("id_alerta") 
+            problema = dados_paciente.get("doenca_detetada", "Problema não especificado")
+            perfil_paciente = dados_paciente.get("conteudo_completo", {})
+
+>>>>>>> 16c6eca93ada049ef1f74b99333fca7060631c42
             recomendacao = None
 
             # Definimos apenas qual é a recomendação com base no nível de urgência
@@ -26,6 +34,7 @@ class CyclicBehavMedico(CyclicBehaviour):
                 recomendacao = "Pedido de observação presencial imediata"
 
             if recomendacao:
+<<<<<<< HEAD
                 # Preparar o dicionário de resposta
                 mensagens_a_enviar = {
                     "acao_recomendada": recomendacao,
@@ -34,6 +43,38 @@ class CyclicBehavMedico(CyclicBehaviour):
 
                 # 2. Criar mensagem
                 msg_plataforma = Message(to=self.agent.jid_plataforma)
+=======
+
+                print(f"   Dr. Analisou: '{problema}' -> Rx: {recomendacao}")
+
+                payload_resposta = {
+                    "id_alerta": id_alerta_recebido, 
+                    "acao_recomendada": recomendacao,
+                    "medico_responsavel": str(self.agent.jid),
+                    "perfil_completo": perfil_paciente 
+                }
+
+                msg_resposta = msg.make_reply()
+                msg_resposta.set_metadata("performative", "request")
+                msg_resposta.body = jsonpickle.encode(payload_resposta)
+                
+                await self.send(msg_resposta)
+                print(f" [{self.agent.name}] Resposta enviada (via Reply).")
+            
+            elif performative == "agree":
+                print("Registo confirmado na plataforma.")
+
+            else:
+                print(f"Médico: Não foi gerada recomendação para performative: {performative}")
+                # Preparar o dicionário de resposta
+                mensagens_a_enviar = {
+                    "acao_recomendada": recomendacao,
+                    "dados_originais": dados_paciente # Opcional: devolver os dados para contexto
+                }
+
+                # 2. Criar 
+                msg_plataforma = Message(to=str(msg.sender))
+>>>>>>> 16c6eca93ada049ef1f74b99333fca7060631c42
                 msg_plataforma.set_metadata("performative", "request") 
                 
                 # 3. CORREÇÃO CRÍTICA: Codificar o dicionário para String
@@ -41,9 +82,12 @@ class CyclicBehavMedico(CyclicBehaviour):
                 
                 await self.send(msg_plataforma)
                 print(f"[{self.agent.name}] Enviou parecer: '{recomendacao}'")
+<<<<<<< HEAD
             
             else:
                 print(f"[{self.agent.name}] Recebi performative desconhecido: {performative}")
+=======
+>>>>>>> 16c6eca93ada049ef1f74b99333fca7060631c42
 
         else:
             pass

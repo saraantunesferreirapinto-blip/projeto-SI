@@ -3,12 +3,12 @@ from Behaviour.periodic_dispositivo import PeriodicBehavDispositivo
 
 class DispositivoAgent(Agent):
 
-    def __init__(self, jid, password, dispositivo_logica, jid_destino):
+    def __init__(self, jid, password, tipo_dispositivo, jid_paciente):
         super().__init__(jid, password)
         # Guardamos a lógica específica (o objeto Tensiometro ou Glicometro)
-        self.dispositivo_logica = dispositivo_logica
+        self.tipo_dispositivo = tipo_dispositivo
         # Guardamos para quem este agente deve enviar os dados
-        self.jid_destino = jid_destino
+        self.jid_paciente = jid_paciente
 
     async def setup(self):
         print(f"Agente {self.name} a iniciar...")
