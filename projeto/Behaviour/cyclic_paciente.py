@@ -30,8 +30,6 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 valor = conteudo.get("valor")
                 remetente = msg.sender  # O JID de quem enviou (ex: tensiometro@server)
 
-                print(f"--> Recebi dados de {remetente}: {tipo} = {valor}")
-
                 # Atualiza a Classe Perfil (que está no Agente)
                 self.agent.meu_perfil.atualizar_sinal(tipo, valor)
 

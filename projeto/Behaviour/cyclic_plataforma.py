@@ -27,22 +27,20 @@ class CyclicBehavPlataforma(CyclicBehaviour):
         if msg:
             remetente = str(msg.sender)
             performative = msg.get_metadata("performative")
-            ####################################################################
+            
             #EXISTENCIA DO PACIENTE
-            ####################################################################
-            if performative == "subscribe":  # verificar nome da performative ###########################################################################################333
+            if performative == "subscribe":  
                 paciente_info = jsonpickle.decode(msg.body)
                 self.agent.paciente_subscribe.append(paciente_info)######criar no agente
-                print("Agent {}:".format(str(self.agent.jid)) + " Paciente Agent {} registered!".format(remetente))################################
+                print(f"✅ Paciente {remetente} registado com sucesso!")
                 
                 reply = msg.make_reply()
                 reply.set_metadata("performative", "agree") # 'agree' confirma a subscrição
                 reply.body = "Registo efetuado com sucesso na Plataforma."
                 await self.send(reply)
-            ####################################################################
-            #EXISTENCIA DO MEDICO
-            ####################################################################           
-            elif performative == "propose":  # verificar nome da performative ###########################################################################################333
+            
+            #EXISTENCIA DO MEDICO          
+            elif performative == "propose": 
                 # jsonpickle reconstrói o objeto Perfil_medico
                 perfil_obj = jsonpickle.decode(msg.body) 
 
