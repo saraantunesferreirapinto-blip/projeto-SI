@@ -116,4 +116,4 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     await self.send(msg_para_medico)
 
                     print(f"--- SUCESSO ---")
-                    print(f"Alerta enviado para: {medico_atendimento.nome} (Dist: {dist_min:.1f})")        
+                    print(f"Alerta enviado para: {medico_atendimento.nome} (Dist: {dist_min:.1f})")  
