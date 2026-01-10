@@ -11,11 +11,17 @@ class CyclicBehavMedico(CyclicBehaviour):
 
         if msg:
             performative = msg.get_metadata("performative")
+<<<<<<< HEAD
         
             dados_paciente = jsonpickle.decode(msg.body)
             id_alerta_recebido = dados_paciente.get("id_alerta") 
             problema = dados_paciente.get("doenca_detetada", "Problema não especificado")
             perfil_paciente = dados_paciente.get("conteudo_completo", {})
+=======
+            print(f"[{self.agent.jid}] Recebi um pedido de ajuda!")
+
+            dados_paciente = jsonpickle.decode(msg.body)
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
             recomendacao = None
 
             # Definimos apenas qual é a recomendação com base no nível de urgência
@@ -29,6 +35,7 @@ class CyclicBehavMedico(CyclicBehaviour):
                 recomendacao = "Pedido de observação presencial imediata"
 
             if recomendacao:
+<<<<<<< HEAD
                 print(f"   Dr. Analisou: '{problema}' -> Rx: {recomendacao}")
 
                 payload_resposta = {
@@ -50,5 +57,26 @@ class CyclicBehavMedico(CyclicBehaviour):
 
             else:
                 print(f"Médico: Não foi gerada recomendação para performative: {performative}")
+=======
+                # Preparar o dicionário de resposta
+                mensagens_a_enviar = {
+                    "acao_recomendada": recomendacao,
+                    "dados_originais": dados_paciente # Opcional: devolver os dados para contexto
+                }
+
+                # 2. Criar 
+                msg_plataforma = Message(to=str(msg.sender))
+                msg_plataforma.set_metadata("performative", "request") 
+                
+                # 3. CORREÇÃO CRÍTICA: Codificar o dicionário para String
+                msg_plataforma.body = jsonpickle.encode(mensagens_a_enviar)
+                
+                await self.send(msg_plataforma)
+                print(f"[{self.agent.name}] Enviou parecer: '{recomendacao}'")
+            
+            else:
+                print(f"[{self.agent.name}] Recebi performative desconhecido: {performative}")
+
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
         else:
             pass

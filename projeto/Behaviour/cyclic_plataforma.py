@@ -17,7 +17,11 @@ class CyclicBehavPlataforma(CyclicBehaviour):
         for jid, info in self.agent.medico_subscribe.items():
             if info.get('especialidade', '').lower() == especialidade.lower():
                 medicos_encontrados.append(jid)
+<<<<<<< HEAD
         return medicos_encontrados
+=======
+        return medicos_encontrados    
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
 
     async def run(self):
         msg = await self.receive(timeout=10)  # wait for a message for 10 seconds
@@ -52,10 +56,13 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                 self.agent.medico_subscribe[jid_medico] = dados_formatados
                 
                 print(f"✅ Médico {jid_medico} registado com sucesso!")
+<<<<<<< HEAD
                 reply = msg.make_reply()
                 reply.set_metadata("performative", "agree")
                 reply.body = "Registo de médico aceite."
                 await self.send(reply)
+=======
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
             ####################################################################
             #FAILURE
             ####################################################################
@@ -105,7 +112,11 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     especialidade_procurada = "pneumologia"
 
                 print(f"🔎 Doença: {doenca} -> Especialidade necessária: {especialidade_procurada}")
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
                 # --- 3. Filtrar Médicos ---
                 # Agora usamos a variável certa que criámos acima
                 medicos_disponiveis = self.filtrar_medicos(especialidade_procurada)
@@ -131,6 +142,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                             if d < dist_min:
                                 dist_min = d
                                 medico_atendimento = m_jid # Guardamos o JID para enviar a msg
+<<<<<<< HEAD
                                 jid_destino = m_jid       
 
                 # --- 5. Enviar Mensagem ---
@@ -194,3 +206,43 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
                 except Exception as e:
                     print(f"[Plataforma] Erro ao processar resposta do médico: {e}")  
+=======
+                                jid_destino = m_jid
+
+                # --- 6. Enviar para o Médico ---
+                if jid_destino:
+                    print(f"[Plataforma] ✅ A enviar para {jid_destino}")
+                    msg_medico = Message(to=jid_destino)
+                    msg_medico.set_metadata("performative", performative)
+                    msg_medico.body = jsonpickle.encode(perfil_paciente)
+                    await self.send(msg_medico)
+
+            elif performative == "request":
+                try:
+                    # 1. Descodificar a resposta do médico
+                    resposta_medico = jsonpickle.decode(msg.body)
+                    recomendacao = resposta_medico.get("acao_recomendada")
+                    dados_originais = resposta_medico.get("dados_originais")
+                    
+                    # 2. Obter o JID do paciente que gerou o alerta
+                    # Assumindo que o médico devolveu os 'dados_originais' que enviámos
+                    jid_paciente = dados_originais.get("jid")
+
+                    if jid_paciente:
+                        print(f"[Plataforma] 📨 Reencaminhando recomendação do {msg.sender} para o paciente {jid_paciente}")
+                        
+                        # 3. Criar a mensagem para o paciente
+                        msg_para_paciente = Message(to=jid_paciente)
+                        msg_para_paciente.set_metadata("performative", "inform")
+                        msg_para_paciente.body = jsonpickle.encode({
+                            "medico": str(msg.sender),
+                            "recomendacao": recomendacao
+                        })
+                        
+                        await self.send(msg_para_paciente)
+                    else:
+                        print(f"[Plataforma] ❌ Erro: Não foi possível identificar o paciente na resposta do médico.")
+
+                except Exception as e:
+                    print(f"[Plataforma] Erro ao processar resposta do médico: {e}")        
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee

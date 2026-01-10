@@ -18,7 +18,11 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 rec = conteudo.get("recomendacao")
                 print(f"\n[NOTIFICAÇÃO MÉDICA] O médico {medico} recomenda: {rec}\n")
 
+<<<<<<< HEAD
             if performative == "inform" or performative is None:
+=======
+            elif performative == "inform" or performative is None:
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
                 # Descodifica o JSON
                 conteudo = jsonpickle.decode(msg.body)
                 tipo = conteudo.get("tipo_dispositivo")
@@ -32,6 +36,7 @@ class CyclicBehavPaciente(CyclicBehaviour):
 
                 # Verifica como ficou o relatório atual
                 relatorio = self.agent.meu_perfil.formatar_relatorio()
+                
                 print(f"    Estado Atual do Paciente: {relatorio['sinais_vitais']}")
 
                 # Enviar para o GESTOR DE ALERTAS (para análise de risco)
@@ -63,8 +68,3 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 msg.set_metadata("performative", "failure")
                 msg.body = jsonpickle.encode(relatorio)
 
-            else:
-                print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
-        
-        else:
-            print("Paciente: Nenhuma mensagem recebida recentemente.")

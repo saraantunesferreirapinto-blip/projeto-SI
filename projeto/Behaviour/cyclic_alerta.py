@@ -52,7 +52,11 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 if valor_tens is not None:
                     problema = "Tensão Normal"
                     performative = "informativo"
+<<<<<<< HEAD
                     
+=======
+
+>>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
                     try:
                         if isinstance(valor_tens, str) and "/" in valor_tens:
                             sys, dia = map(int, valor_tens.split('/'))
@@ -103,7 +107,6 @@ class CyclicBehavAlerta(CyclicBehaviour):
                 # ENVIO DE TODAS AS MENSAGENS GERADAS
                 destino = self.agent.get("plataforma_jid")
 
-                
                 if destino and mensagens_a_enviar:
                     for item in mensagens_a_enviar:
                         msg_out = Message(to=destino)
