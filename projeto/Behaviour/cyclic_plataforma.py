@@ -98,6 +98,19 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
                 print(f"--- SUCESSO ---")
                 print(f"Alerta {performative.upper()} enviado para o especialista: {destinatario_jid}")
-                
 
+            elif performative == "request":  
+    
+                dados_do_medico = jsonpickle.decode(msg.body)
+            
+                paciente_perfil = dados_do_medico.get("perfil_completo")
+                jid_destino =paciente_perfil["jid"]
+                print(f"PLATAFORMA: Recomendação para o paciente {jid_destino}")
+                
+                msg_para_paciente = Message(to=str(jid_destino))
+                msg_para_paciente.set_metadata("performative","inform")
+                msg_para_paciente.body=jsonpickle.encode(dados_do_medico)
+
+                await self.send(msg_para_paciente)
+                print(f"PLATAFORMA: Mensagem enviada para o JID do paciente!")
  
