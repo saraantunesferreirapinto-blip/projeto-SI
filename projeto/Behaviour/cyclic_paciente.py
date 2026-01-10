@@ -19,7 +19,7 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 print(f"\n[NOTIFICAÇÃO MÉDICA] O médico {medico} recomenda: {rec}\n")
 
 
-            if performative == "inform" or performative is None:
+            elif performative == "inform" or performative is None:
 
                 # Descodifica o JSON
                 conteudo = jsonpickle.decode(msg.body)
@@ -65,4 +65,10 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 msg = Message(to=self.agent.get("jid_plataforma"))
                 msg.set_metadata("performative", "failure")
                 msg.body = jsonpickle.encode(relatorio)
+
+            else:
+                print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
+        
+        else:
+            print("Paciente: Nenhuma mensagem recebida recentemente.")
 

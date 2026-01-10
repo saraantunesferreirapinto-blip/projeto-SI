@@ -2,6 +2,7 @@ import jsonpickle
 from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 from Classes.perfil_paciente import Perfil_paciente 
+import time
 
 class CyclicBehavAlerta(CyclicBehaviour):
     async def run(self):
@@ -35,10 +36,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                             performative = "urgente"
                             problema = f"Glicemia Descontrolada ({valor_glic})"
                     
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
                     
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "diabetes",
                             "problema": problema,
@@ -65,9 +68,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                     except:
                         pass
 
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
+
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "hipertensao",
                             "problema": problema,
@@ -90,9 +96,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                             performative = "urgente"
                             problema = f"Saturação Baixa ({valor_oxi}%)"
 
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_diabetes"
+
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "dpoc",
                             "problema": problema,
@@ -134,10 +143,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                     performative = "critico"
                     problema = "Falha na leitura do Glicómetro"
                     valor = "N/A" # Não há valor numa falha
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_glic"
                     
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "diabetes",
                             "problema": problema,
@@ -153,10 +164,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                     performative = "critico"
                     problema = "Falha na leitura do Tensiometro"
                     valor = "N/A"
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_tens"
 
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "hipertensao",
                             "problema": problema,
@@ -172,10 +185,12 @@ class CyclicBehavAlerta(CyclicBehaviour):
                     performative = "critico"
                     problema = "Falha na leitura do Oximtro"
                     valor = "N/A"
+                    id_unico = f"alert_{self.agent.name}_{int(time.time()*1000)}_fail_oxi"
 
                     mensagens_a_enviar.append({
                         "performative": performative,
                         "body": {
+                            "id_alerta": id_unico,
                             "tipo_alerta": performative.upper(),
                             "doenca_detetada": "dpoc",
                             "problema": problema,

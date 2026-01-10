@@ -22,6 +22,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
     async def run(self):
         msg = await self.receive(timeout=10)  # wait for a message for 10 seconds
+        remetente = str(msg.sender)
 
         if msg:
             performative = msg.get_metadata("performative")
@@ -43,16 +44,15 @@ class CyclicBehavPlataforma(CyclicBehaviour):
             elif performative == "propose":  # verificar nome da performative ###########################################################################################333
                 # jsonpickle reconstrói o objeto Perfil_medico
                 perfil_obj = jsonpickle.decode(msg.body) 
-                jid_medico = str(msg.sender)
 
                 # Convertemos o objeto para dicionário usando a tua função
                 # Isto resolve o erro do .get()
                 dados_formatados = perfil_obj.formatar_perfil()
 
                 # Guardamos no dicionário da Plataforma
-                self.agent.medico_subscribe[jid_medico] = dados_formatados
+                self.agent.medico_subscribe[remetente] = dados_formatados
                 
-                print(f"✅ Médico {jid_medico} registado com sucesso!")
+                print(f"✅ Médico {remetente} registado com sucesso!")
                 reply = msg.make_reply()
                 reply.set_metadata("performative", "agree")
                 reply.body = "Registo de médico aceite."
@@ -85,12 +85,11 @@ class CyclicBehavPlataforma(CyclicBehaviour):
             ####################################################################
             elif performative in["urgente","critico","informativo"]:#verificar o nome da performative ############################################################################################################33
                 # --- 1. Extração de Dados ---
-                
-                dados_alerta = jsonpickle.decode(msg.body)
-                doenca = dados_alerta.get("doenca_detetada", "").lower()
+                dados_dict = jsonpickle.decode(msg.body)
+                doenca = dados_dict.get("doenca_detetada", "").lower()
                 
                 # Removido o self.mapear_especialidade porque o mapeamento está abaixo
-                perfil_paciente = dados_alerta.get("conteudo_completo", {})
+                perfil_paciente = dados_dict.get("conteudo_completo", {})
 
                 # --- 2. Obter Posição do Paciente ---
                 pos_p = perfil_paciente.get("posicao", {'x': 0, 'y': 0})
@@ -113,6 +112,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                 medicos_disponiveis = self.filtrar_medicos(especialidade_procurada)
                 print(f"DEBUG: Encontrei {len(medicos_disponiveis)} médicos para {especialidade_procurada}")
 
+                medico_final = None
                 dist_min = 1000
                 jid_destino = None
 
@@ -132,17 +132,16 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                             
                             if d < dist_min:
                                 dist_min = d
-                                medico_atendimento = m_jid # Guardamos o JID para enviar a msg     
+                                medico_final = m_jid # Guardamos o JID para enviar a msg   
 
+                id_alerta = dados_dict.get("id_alerta")
                 # --- 5. Enviar Mensagem ---
-                if medico_atendimento:
-                    destinatario_jid = str(medico_atendimento.jid_medico)
-                    id_alerta = f"alert_{int(time.time()*1000)}"
-                    dados_alerta["id_alerta"] = id_alerta
+                if medico_final:
+                    destinatario_jid = str(medico_final.jid_medico)
 
                     self.agent.alertas_pendentes[id_alerta] = {
                         "medico_atual": destinatario_jid,
-                        "conteudo": dados_alerta,
+                        "conteudo": dados_dict,
                         "performative_orig": performative, # <--- IMPORTANTE PARA O PERIODIC SABER O TIPO
                         "tentativas": 1,
                         "ultima_tentativa": time.time(),
@@ -151,84 +150,54 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     
                     msg_para_medico = Message(to=jid_destino)
                     msg_para_medico.set_metadata("performative", performative)
-                    msg_para_medico.body = jsonpickle.encode(perfil_paciente)
+                    msg_para_medico.body = jsonpickle.encode(dados_dict)
                     
                     await self.send(msg_para_medico)
 
                     print(f"--- SUCESSO ---")
-                    print(f"Alerta enviado para: {medico_atendimento.nome} (Dist: {dist_min:.1f})")  
+                    print(f"Alerta enviado para: {medico_final.nome} (Dist: {dist_min:.1f})")  
 
             elif performative == "request":  
     
-                dados_do_medico = jsonpickle.decode(msg.body)
-
-                if "id_alerta" in dados_do_medico:
-                    id_resolvido = dados_do_medico["id_alerta"]
-                    
-                    if id_resolvido in self.agent.alertas_pendentes:
-                        self.agent.alertas_pendentes[id_resolvido]["status"] = "resolvido"
-            
                 try:
-                    # 1. Descodificar a resposta do médico
+                    # A. Descodificar
                     resposta_medico = jsonpickle.decode(msg.body)
-                    recomendacao = resposta_medico.get("acao_recomendada")
-                    dados_originais = resposta_medico.get("dados_originais")
-                    
-                    # 2. Obter o JID do paciente que gerou o alerta
-                    # Assumindo que o médico devolveu os 'dados_originais' que enviámos
-                    jid_paciente = dados_originais.get("jid")
+                    # Proteção extra caso venha string
+                    if isinstance(resposta_medico, str):
+                        resposta_medico = jsonpickle.decode(resposta_medico)
+
+                    # B. Fechar Pendente
+                    if "id_alerta" in resposta_medico:
+                        id_res = resposta_medico["id_alerta"]
+                        if id_res in self.agent.alertas_pendentes:
+                            self.agent.alertas_pendentes[id_res]["status"] = "resolvido"
+                            print(f"Plataforma: Caso {id_res} resolvido.")
+
+                    # C. Encaminhar para Paciente
+                    # O médico devolve o 'perfil_completo' que nós lhe enviámos. O JID está lá.
+                    perfil_p = resposta_medico.get("perfil_completo", {})
+                    # Fallback: tentar dados_originais se perfil_completo falhar
+                    if not perfil_p:
+                        perfil_p = resposta_medico.get("dados_originais", {}).get("conteudo_completo", {})
+
+                    jid_paciente = perfil_p.get("jid")
 
                     if jid_paciente:
-                        print(f"[Plataforma] 📨 Reencaminhando recomendação do {msg.sender} para o paciente {jid_paciente}")
+                        msg_paciente = Message(to=jid_paciente)
+                        msg_paciente.set_metadata("performative", "inform")
                         
-                        # 3. Criar a mensagem para o paciente
-                        msg_para_paciente = Message(to=jid_paciente)
-                        msg_para_paciente.set_metadata("performative", "inform")
-                        msg_para_paciente.body = jsonpickle.encode({
-                            "medico": str(msg.sender),
-                            "recomendacao": recomendacao
-                        })
+                        # Limpar dados redundantes antes de enviar ao paciente (opcional)
+                        corpo_final = {
+                            "medico": remetente,
+                            "recomendacao": resposta_medico.get("acao_recomendada"),
+                            "id_alerta": resposta_medico.get("id_alerta")
+                        }
+                        msg_paciente.body = jsonpickle.encode(corpo_final)
                         
-                        await self.send(msg_para_paciente)
+                        await self.send(msg_paciente)
+                        print(f"✅ Resposta entregue ao paciente {jid_paciente}")
                     else:
-                        print(f"[Plataforma] ❌ Erro: Não foi possível identificar o paciente na resposta do médico.")
+                        print(f"❌ ERRO: JID do paciente não encontrado na resposta do médico.")
 
                 except Exception as e:
-                    print(f"[Plataforma] Erro ao processar resposta do médico: {e}")  
-
-                # --- 6. Enviar para o Médico ---
-                if jid_destino:
-                    print(f"[Plataforma] ✅ A enviar para {jid_destino}")
-                    msg_medico = Message(to=jid_destino)
-                    msg_medico.set_metadata("performative", performative)
-                    msg_medico.body = jsonpickle.encode(perfil_paciente)
-                    await self.send(msg_medico)
-
-            elif performative == "request":
-                try:
-                    # 1. Descodificar a resposta do médico
-                    resposta_medico = jsonpickle.decode(msg.body)
-                    recomendacao = resposta_medico.get("acao_recomendada")
-                    dados_originais = resposta_medico.get("dados_originais")
-                    
-                    # 2. Obter o JID do paciente que gerou o alerta
-                    # Assumindo que o médico devolveu os 'dados_originais' que enviámos
-                    jid_paciente = dados_originais.get("jid")
-
-                    if jid_paciente:
-                        print(f"[Plataforma] 📨 Reencaminhando recomendação do {msg.sender} para o paciente {jid_paciente}")
-                        
-                        # 3. Criar a mensagem para o paciente
-                        msg_para_paciente = Message(to=jid_paciente)
-                        msg_para_paciente.set_metadata("performative", "inform")
-                        msg_para_paciente.body = jsonpickle.encode({
-                            "medico": str(msg.sender),
-                            "recomendacao": recomendacao
-                        })
-                        
-                        await self.send(msg_para_paciente)
-                    else:
-                        print(f"[Plataforma] ❌ Erro: Não foi possível identificar o paciente na resposta do médico.")
-
-                except Exception as e:
-                    print(f"[Plataforma] Erro ao processar resposta do médico: {e}")        
+                    print(f"ERRO ao processar resposta do médico: {e}")
