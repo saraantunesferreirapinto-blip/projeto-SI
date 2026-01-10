@@ -65,6 +65,10 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 msg.set_metadata("performative", "failure")
                 msg.body = jsonpickle.encode(relatorio)
 
+            elif performative == "agree":
+                print(f"[{self.agent.name}] ✅ Confirmação recebida: {msg.body}")
+                return
+
             else:
                 print("Agent {}:".format(str(self.agent.jid)) + " Message not understood!")
         

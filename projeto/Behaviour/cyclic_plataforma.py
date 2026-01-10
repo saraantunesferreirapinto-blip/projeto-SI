@@ -113,7 +113,6 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
                 medico_final = None
                 dist_min = 1000
-                jid_destino = None
 
                 # CORREÇÃO AQUI: Itera sobre a lista FILTRADA
                 for m_jid in medicos_disponiveis:
@@ -136,7 +135,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                 id_alerta = dados_dict.get("id_alerta")
                 # --- 5. Enviar Mensagem ---
                 if medico_final:
-                    destinatario_jid = str(medico_final.jid_medico)
+                    destinatario_jid = str(medico_final)
 
                     self.agent.alertas_pendentes[id_alerta] = {
                         "medico_atual": destinatario_jid,
@@ -152,8 +151,9 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     msg_para_medico.body = jsonpickle.encode(dados_dict)
                     
                     await self.send(msg_para_medico)
-                    print(f"--- SUCESSO ---")
-                    print(f"Alerta enviado para: {medico_final.nome} (Dist: {dist_min:.1f})")  
+                    dados_medico = self.agent.medico_subscribe.get(medico_final, {})
+                    nome_medico = dados_medico.get("nome", "Médico")
+                    print(f"Alerta enviado para: {nome_medico} ({medico_final}) (Dist: {dist_min:.1f})")
 
             elif performative == "request":  
     

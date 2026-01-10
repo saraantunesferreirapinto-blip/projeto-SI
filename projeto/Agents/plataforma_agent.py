@@ -11,6 +11,6 @@ class PlataformaAgent(Agent):
 
     async def setup(self):
         a = CyclicBehavPlataforma()
-        b = PeriodicBehavPlataforma(period=10)
+        b = PeriodicBehavPlataforma(period=30)
         self.add_behaviour(a)
         self.add_behaviour(b)

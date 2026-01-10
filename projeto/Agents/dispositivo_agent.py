@@ -11,6 +11,5 @@ class DispositivoAgent(Agent):
         self.jid_paciente = jid_paciente
 
     async def setup(self):
-        # Adiciona o comportamento para enviar dados a cada 5 segundos
         b = PeriodicBehavDispositivo(period=10)
         self.add_behaviour(b)
