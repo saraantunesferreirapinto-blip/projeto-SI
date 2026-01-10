@@ -17,11 +17,8 @@ class CyclicBehavPlataforma(CyclicBehaviour):
         for jid, info in self.agent.medico_subscribe.items():
             if info.get('especialidade', '').lower() == especialidade.lower():
                 medicos_encontrados.append(jid)
-<<<<<<< HEAD
         return medicos_encontrados
-=======
-        return medicos_encontrados    
->>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
+
 
     async def run(self):
         msg = await self.receive(timeout=10)  # wait for a message for 10 seconds
@@ -56,13 +53,11 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                 self.agent.medico_subscribe[jid_medico] = dados_formatados
                 
                 print(f"✅ Médico {jid_medico} registado com sucesso!")
-<<<<<<< HEAD
                 reply = msg.make_reply()
                 reply.set_metadata("performative", "agree")
                 reply.body = "Registo de médico aceite."
                 await self.send(reply)
-=======
->>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
+
             ####################################################################
             #FAILURE
             ####################################################################
@@ -112,11 +107,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                     especialidade_procurada = "pneumologia"
 
                 print(f"🔎 Doença: {doenca} -> Especialidade necessária: {especialidade_procurada}")
-<<<<<<< HEAD
-                
-=======
 
->>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
                 # --- 3. Filtrar Médicos ---
                 # Agora usamos a variável certa que criámos acima
                 medicos_disponiveis = self.filtrar_medicos(especialidade_procurada)
@@ -141,9 +132,7 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                             
                             if d < dist_min:
                                 dist_min = d
-                                medico_atendimento = m_jid # Guardamos o JID para enviar a msg
-<<<<<<< HEAD
-                                jid_destino = m_jid       
+                                medico_atendimento = m_jid # Guardamos o JID para enviar a msg     
 
                 # --- 5. Enviar Mensagem ---
                 if medico_atendimento:
@@ -206,8 +195,6 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
                 except Exception as e:
                     print(f"[Plataforma] Erro ao processar resposta do médico: {e}")  
-=======
-                                jid_destino = m_jid
 
                 # --- 6. Enviar para o Médico ---
                 if jid_destino:
@@ -245,4 +232,3 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
                 except Exception as e:
                     print(f"[Plataforma] Erro ao processar resposta do médico: {e}")        
->>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee

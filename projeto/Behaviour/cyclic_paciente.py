@@ -18,11 +18,9 @@ class CyclicBehavPaciente(CyclicBehaviour):
                 rec = conteudo.get("recomendacao")
                 print(f"\n[NOTIFICAÇÃO MÉDICA] O médico {medico} recomenda: {rec}\n")
 
-<<<<<<< HEAD
+
             if performative == "inform" or performative is None:
-=======
-            elif performative == "inform" or performative is None:
->>>>>>> 4e85d73f58f2eaf98d9876a8751dbf49e19c3aee
+
                 # Descodifica o JSON
                 conteudo = jsonpickle.decode(msg.body)
                 tipo = conteudo.get("tipo_dispositivo")
