@@ -24,7 +24,5 @@ class oneShotBehavMedico (OneShotBehaviour):
         msg.set_metadata("performative", "propose")  # Instantiate the message
 
         msg.body = jsonpickle.encode(self.agent.perfil)               
-
-        print(f"Agent {self.agent.jid}: Enviando proposta de serviço para a Plataforma...")
         
         await self.send(msg)

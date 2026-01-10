@@ -13,9 +13,6 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
         if not destino:
             print(f"[{self.agent.name}] Erro: Sem Paciente configurado.")
             return
-        
-        # --- DEBUG: Ver para onde estamos a enviar ---
-        print(f"DEBUG: O {self.agent.name} vai enviar para: '{destino}'")
 
         valor = None
         
@@ -50,10 +47,10 @@ class PeriodicBehavDispositivo (PeriodicBehaviour):
                     "tipo_dispositivo": tipo,
                     "valor": valor
                 }
-                print(f"[{self.agent.name}] Gerou valor: {valor}")
+
                 msg = Message(to=destino)
                 msg.set_metadata("performative", "inform")
                 msg.body = jsonpickle.encode(payload)
             
                 await self.send(msg)
-                print(f"[{self.agent.name}] Gerou e enviou: {payload}")
+                print(f"[{self.agent.name}] Gerou o valor {valor} e enviou: {payload}")

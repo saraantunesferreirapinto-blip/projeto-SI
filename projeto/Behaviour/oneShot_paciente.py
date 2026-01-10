@@ -12,18 +12,14 @@ class OneShotBehavPaciente(OneShotBehaviour):
         y = random.randint(1, 100)
         posicao_inicial = Position(x, y)
 
-        
-        # 2. USAR O PERFIL QUE VEIO DA MAIN
-        # Em vez de criar um novo (o que apagaria o nome "Maria"),
-        # nós apenas adicionamos a posição ao perfil que já existe!
+        # USAR O PERFIL QUE VEIO DA MAIN
         if hasattr(self.agent, "meu_perfil") and self.agent.meu_perfil:
-            print(f"[{self.agent.name}] A definir posição inicial para {self.agent.meu_perfil.nome}...")
             self.agent.meu_perfil.posicao_atual = posicao_inicial
         else:
             print(f"[{self.agent.name}] ERRO CRÍTICO: Perfil não encontrado! (Verifique o __init__ do Agente)")
             return
 
-        # 3. REGISTAR NA PLATAFORMA
+        # REGISTAR NA PLATAFORMA
         destino = self.agent.jid_plataforma # Acede diretamente à variável criada no __init__ 
         
         if destino:

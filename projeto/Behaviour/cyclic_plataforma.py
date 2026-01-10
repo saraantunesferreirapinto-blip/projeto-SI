@@ -23,9 +23,9 @@ class CyclicBehavPlataforma(CyclicBehaviour):
 
     async def run(self):
         msg = await self.receive(timeout=10)  # wait for a message for 10 seconds
-        remetente = str(msg.sender)
-
+        
         if msg:
+            remetente = str(msg.sender)
             performative = msg.get_metadata("performative")
             ####################################################################
             #EXISTENCIA DO PACIENTE
@@ -110,7 +110,6 @@ class CyclicBehavPlataforma(CyclicBehaviour):
                 # --- 3. Filtrar Médicos ---
                 # Agora usamos a variável certa que criámos acima
                 medicos_disponiveis = self.filtrar_medicos(especialidade_procurada)
-                print(f"DEBUG: Encontrei {len(medicos_disponiveis)} médicos para {especialidade_procurada}")
 
                 medico_final = None
                 dist_min = 1000

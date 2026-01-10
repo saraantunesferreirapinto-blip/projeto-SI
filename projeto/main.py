@@ -96,13 +96,11 @@ async def criar_equipa_medica(plataforma_jid):
         )
         
         # Inicializar Agente
-        # Nota: Passamos plataforma_jid para ele saber onde se registar
         medico_agent = MedicoAgent(medico_jid, PASSWORD, perfil=perfil_med, plataforma_jid=plataforma_jid)
         
         await medico_agent.start()
         agentes_medicos.append(medico_agent)
         
-        print(f"   -> {nome} ({especialidade}) entrou ao serviço.")
         # Pequena pausa para não "encavalar" os registos na consola
         await asyncio.sleep(0.2) 
         

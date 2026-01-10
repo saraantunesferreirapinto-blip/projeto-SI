@@ -11,7 +11,6 @@ class MedicoAgent(Agent):
         self.plataforma_jid = plataforma_jid
 
     async def setup(self):
-        print(f"agente customer iniciado: {self.jid}")
         a = CyclicBehavMedico()
         b = oneShotBehavMedico()
         self.add_behaviour(a)

@@ -11,8 +11,5 @@ class AlertaAgent(Agent):
         self.set("plataforma_jid", plataforma_jid)
 
     async def setup(self):
-        print(f"[{self.name}] Agente de Alertas INICIADO e à escuta...")
-        
-        # Inicia o comportamento inteligente que criámos antes
-        b = CyclicBehavAlerta()
-        self.add_behaviour(b)
+        a = CyclicBehavAlerta()
+        self.add_behaviour(a)

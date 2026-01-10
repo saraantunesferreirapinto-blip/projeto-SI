@@ -14,10 +14,9 @@ class PacienteAgent(Agent):
         self.jid_alerta = alerta_jid
 
     async def setup(self):
-        print(f"agente customer iniciado: {self.jid}")
         a = CyclicBehavPaciente()
         b = OneShotBehavPaciente()
-        c = PeriodicBehavPaciente(period=5)
+        c = PeriodicBehavPaciente(period=10)
         self.add_behaviour(a)
         self.add_behaviour(b)
         self.add_behaviour(c)

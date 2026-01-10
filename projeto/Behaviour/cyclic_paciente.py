@@ -5,7 +5,6 @@ from spade.message import Message
 class CyclicBehavPaciente(CyclicBehaviour):
 
     async def run(self):
-        print("Paciente: À espera de dados...")
 
         msg = await self.receive(timeout=10)
 

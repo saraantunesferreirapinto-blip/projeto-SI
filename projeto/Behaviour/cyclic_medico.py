@@ -7,7 +7,6 @@ import json
 class CyclicBehavMedico(CyclicBehaviour):
 
     async def run(self):
-        print(f"[{self.agent.name}] Médico à espera de pedidos...")
         msg = await self.receive(timeout=10)
 
         if msg:
